@@ -1,0 +1,5 @@
+# Overrides for Bashly's built-in messages. Anything not set here uses
+# Bashly's default. See https://bashly.dev/advanced/strings/
+
+# Global options are only accepted before the command, so say so.
+invalid_flag: "invalid option: %s\\nRun 'seerr COMMAND --help' for its options. Global options (--url, --api-key, --config) go before the command."

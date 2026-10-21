@@ -1,0 +1,269 @@
+# seerr-cli
+
+A command-line client for [Seerr](https://docs.seerr.dev), the media request manager. Search for movies and TV shows, make and approve requests, and manage issues from your terminal.
+
+Homepage, source code, and issues: [github.com/robloach/seerr-cli](https://github.com/robloach/seerr-cli)
+
+```console
+$ seerr search "The Matrix"
+TYPE    ID     TITLE                     YEAR  STATUS
+movie   603    The Matrix                1999  available
+movie   604    The Matrix Reloaded       2003  -
+person  6384   Keanu Reeves              -     -
+
+$ seerr request create movie "The Matrix Reloaded"
+Requested The Matrix Reloaded (2003) as request #12 (pending)
+```
+
+## Requirements
+
+- Bash 4.2 or newer
+- `curl` or `wget`
+- [`jq`](https://jqlang.org)
+
+### Shells
+
+`seerr` is a Bash script, but you don't have to use Bash as your shell. The script starts Bash itself, so you can run it from any shell, as long as Bash 4.2 or newer is installed:
+
+| Shell | Run `seerr` | Tab completion |
+|---|---|---|
+| Bash | Yes | Yes |
+| Zsh | Yes | Yes |
+| Fish | Yes | No |
+| Other shells (dash, ksh, Nushell, ...) | Yes | No |
+
+Run it as `seerr`, or `bash seerr`. `sh seerr` fails, because it makes a different shell read the script.
+
+## Installation
+
+Download [`seerr`](https://github.com/robloach/seerr-cli/blob/HEAD/seerr) from GitHub into a folder on your `PATH`, such as `~/.local/bin`:
+
+```bash
+curl -fsSL --create-dirs -o ~/.local/bin/seerr https://raw.githubusercontent.com/robloach/seerr-cli/HEAD/seerr
+chmod +x ~/.local/bin/seerr
+```
+
+Or clone the repository, which also gets you the [AI agent skill](#ai-agents):
+
+```bash
+git clone https://github.com/robloach/seerr-cli.git
+install -m 755 seerr-cli/seerr ~/.local/bin/seerr
+```
+
+To get tab completion, add one of these lines to your shell's startup file:
+
+```bash
+source <(seerr completions bash)  # ~/.bashrc
+source <(seerr completions zsh)   # ~/.zshrc, after compinit
+```
+
+## Configuration
+
+There are three methods to provide the configuration for Seerr CLI...
+
+### Config File
+
+ Save both to the config file:
+
+```bash
+seerr config set url https://seerr.example.com
+seerr config set api_key
+```
+
+Leave out the value, as with `api_key` above, and `seerr` prompts for it. The API key prompt doesn't echo what you type, and the key stays out of your shell history. You can also pipe the value in, for example `pass show seerr | seerr config set api_key`.
+
+`seerr config set` updates the config file in use, or creates `~/.config/seerr/seerr-cli.yaml` if there isn't one. It makes the file readable only by you, since it holds your API key.
+
+To write the file yourself, start from [`.seerr-cli.example.yaml`](.seerr-cli.example.yaml):
+
+```yaml
+url: https://seerr.example.com
+api_key: YOUR_API_KEY
+```
+
+`seerr` reads the first of these files that exists:
+
+1. `~/.config/seerr/seerr-cli.yaml`
+2. `~/.config/seerr-cli.yaml`
+3. `~/.seerr-cli.yaml`
+
+When `XDG_CONFIG_HOME` is set, it replaces `~/.config` in the first two paths.
+
+You can also set these values with environment variables or flags. Flags take precedence over environment variables, which take precedence over the config file.
+
+| Setting | Flag | Environment variable | Config key |
+|---|---|---|---|
+| Server URL | `-u`, `--url` | `SEERR_URL` | `url` |
+| API key | `-k`, `--api-key` | `SEERR_API_KEY` | `api_key` |
+| Config file | `-c`, `--config` | `SEERR_CONFIG` | |
+| Request timeout | | `SEERR_TIMEOUT` | `timeout` (seconds, default 30) |
+| HTTP client | | `SEERR_HTTP_CLIENT` | `http_client` (`curl` or `wget`) |
+
+The `--url`, `--api-key`, and `--config` flags go before the command:
+
+```bash
+seerr -u https://seerr.example.com -k YOUR_API_KEY status
+```
+
+To check which settings are in effect, after flags, environment variables, and the config file are combined:
+
+```console
+$ seerr config show
+Config file:  /home/you/.config/seerr/seerr-cli.yaml
+URL:          https://seerr.example.com
+API key:      abcd...wxyz
+HTTP client:  curl
+```
+
+The config file supports the `url`, `api_key`, `timeout`, and `http_client` keys; [`.seerr-cli.example.yaml`](.seerr-cli.example.yaml) lists them all. Keys must use underscores, and a `# comment` on the same line as a value becomes part of the value, so put comments on their own lines.
+
+## Usage
+
+Run `seerr --help`, or `seerr COMMAND --help` for any command, to see all options.
+
+### Search and browse
+
+```bash
+seerr search "Star Trek"                # movies, TV shows, and people
+seerr search "Star Trek" --page 2
+seerr trending --type tv --window week
+seerr movie "The Matrix"                # movie details
+seerr movie 603                         # the same movie, by TMDB ID
+seerr tv "Game of Thrones"              # show details and season availability
+seerr tv "Game of Thrones" --season 1   # episode list
+seerr movie Dune --year 1984            # pick a release year
+```
+
+`seerr movie`, `seerr tv`, `seerr request create`, and `seerr issue create` take either a TMDB ID or a title. For a title, `seerr` searches and picks a result:
+
+- A result with exactly the title you typed wins over the first result, so `Dune` finds *Dune*, not *Dune: Part Two*.
+- Little-known results are skipped: an exact match needs at least a tenth as many votes as the most popular result. `Matrix` still finds *The Matrix*, not an obscure film called *Matrix*.
+- If several popular results have exactly that title, such as the 1984 and 2021 versions of *Dune*, `seerr` lists them and asks which one you mean. It only asks in a terminal; in scripts and pipes it uses the first one.
+- `--year` keeps only results from that release year. `seerr` looks through the first three pages of search results for a match.
+- A number on its own is treated as a TMDB ID. To look up a movie named with a number, add `--year`: `seerr movie 1917 --year 2019`.
+
+### Requests
+
+```bash
+seerr request list                      # most recent requests
+seerr request list --filter pending
+seerr request list --type tv --take 50 --page 2
+seerr request get 12
+
+seerr request create movie "The Matrix"
+seerr request create movie 603 --4k
+seerr request create tv "Game of Thrones"               # all seasons
+seerr request create tv "Game of Thrones" --seasons 1,2
+
+seerr request approve 12
+seerr request decline 12
+seerr request retry 12
+seerr request delete 12
+seerr request count
+```
+
+Request IDs come from `seerr request list`. List commands show 20 results per page; use `--page` to see more, and `--take` to change the page size.
+
+### Media, issues, and users
+
+```bash
+seerr media list --filter available
+seerr issue list                        # open issues
+seerr issue list --filter all
+seerr issue get 3                       # details and comments
+seerr issue create movie "The Matrix" "Audio is out of sync" --problem audio
+seerr issue create tv "Game of Thrones" "No subtitles" --problem subtitles --season 1 --episode 4
+seerr issue comment 3 "Replaced the file, should be fixed now"
+seerr issue resolve 3
+seerr issue reopen 3
+seerr user list
+seerr user get 1
+seerr whoami                            # the user your API key belongs to
+seerr status                            # server version and update status
+```
+
+`--problem` is one of `video`, `audio`, `subtitles`, or `other` (the default). You can only report issues for media that has been requested in Seerr.
+
+### Any other endpoint
+
+The [Seerr API](https://docs.seerr.dev/api/seerr-api/) has far more endpoints than these commands cover. `seerr api` sends a request to any of them and prints the JSON response:
+
+```bash
+seerr api GET /settings/about
+seerr api GET "/discover/movies?genre=18&page=2"
+seerr api POST /settings/jobs/plex-recently-added-scan/run
+seerr api PUT /user/2 --data '{"username": "alice"}'
+seerr api PUT /user/2 --data @user.json
+echo '{"username": "alice"}' | seerr api PUT /user/2 --data -
+```
+
+Paths are relative to `/api/v1`.
+
+## Output and scripting
+
+Commands print aligned tables. Add `--json` (or `-j`) to get the API response as JSON instead, for use with `jq`:
+
+```bash
+# Approve every pending movie request. --take 1000 gets them all,
+# not just the first page of 20.
+seerr request list --filter pending --type movie --take 1000 --json \
+  | jq -r '.results[].id' \
+  | xargs -n1 seerr request approve
+```
+
+The API returns only TMDB IDs for requests, media, and issues. To show titles, these tables make one extra API call per title, 8 at a time, so large lists take longer. `--json` skips those calls.
+
+Errors go to stderr, and `seerr` exits with status 1 on any failure: bad arguments, a server that can't be reached, an HTTP error response, or a response that isn't JSON (for example, a proxy's login page).
+
+Requests time out after 30 seconds. Change that with `SEERR_TIMEOUT` or `seerr config set timeout SECONDS`. With curl, that limit covers the whole request. With wget, it applies to each wait for the server, such as connecting or the next part of the response, so a slow response can take longer. A request that fails is never retried, so a slow server can't cause a request to be created twice.
+
+## AI agents
+
+[`skills/seerr`](skills/seerr/SKILL.md) is an [Agent Skill](https://agentskills.io) that teaches AI agents how to use `seerr`: how to find a title and its ID, what the status codes mean, and how to request, approve, and report problems. It tells agents to ask you before changing anything on your server, and never to read your API key.
+
+To use it with [Claude Code](https://claude.com/claude-code), link it into your skills folder. Run this from inside a clone of the [repository](https://github.com/robloach/seerr-cli):
+
+```bash
+ln -s "$PWD/skills/seerr" ~/.claude/skills/seerr
+```
+
+If `seerr` isn't installed yet, the skill tells the agent how to install it, and to ask you first.
+
+Then ask things like "is Slow Horses season 5 available?" or "request Dune from 1984". For other agents that support Agent Skills, see their documentation for where skills go.
+
+## Development
+
+`seerr` is generated by [Bashly](https://bashly.dev). Don't edit the `seerr` script directly; edit the files in `src/` and regenerate it.
+
+```
+settings.yml          Bashly settings; turns on shell completions
+skills/seerr/         Agent Skill for AI agents
+src/
+  bashly.yml          commands, flags, and arguments
+  bashly-strings.yml  changes to Bashly's built-in messages
+  before.sh           runs before every command; resolves settings
+  *_command.sh        one file per command
+  lib/
+    config.sh         reads flags, environment variables, and the config file,
+                      and writes the config file
+    http.sh           sends requests with curl or wget
+    lookup.sh         turns a title into a TMDB ID
+    output.sh         renders tables and JSON
+    titles.sh         looks up titles for TMDB IDs
+    yaml.sh           Bashly's YAML library
+    validations/      argument validators
+```
+
+Regenerate the script, and check it with [ShellCheck](https://www.shellcheck.net):
+
+```bash
+bashly generate                   # development build
+bashly generate --env production  # smaller build for distribution
+shellcheck seerr
+```
+
+Check the generated `seerr` script rather than the files in `src/`. It contains all of them, so ShellCheck can see variables that one file sets and another uses.
+
+## License
+
+[MIT](LICENSE)

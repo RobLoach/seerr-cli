@@ -1,0 +1,474 @@
+name: seerr
+help: Command-line client for the Seerr media request manager
+version: 0.1.0
+
+dependencies:
+  http_client:
+    command: [curl, wget]
+    help: Install curl or wget
+  jq: Install jq from https://jqlang.org
+
+environment_variables:
+- name: seerr_url
+  help: Seerr server URL, e.g. https://seerr.example.com
+  validate: url
+- name: seerr_api_key
+  help: Seerr API key (Settings > General in the Seerr web UI)
+- name: seerr_config
+  help: Path to a YAML config file to use instead of the default locations
+- name: seerr_http_client
+  help: "HTTP client to use (default: curl if installed, otherwise wget)"
+  allowed: [curl, wget]
+  validate: http_client
+- name: seerr_timeout
+  help: "Seconds to wait for the server before giving up on a request (default: 30)"
+  validate: positive_integer
+
+flags:
+- long: --url
+  short: -u
+  arg: url
+  help: Seerr server URL (overrides SEERR_URL and the config file)
+  validate: url
+- long: --api-key
+  short: -k
+  arg: key
+  help: Seerr API key (overrides SEERR_API_KEY and the config file)
+- long: --config
+  short: -c
+  arg: path
+  help: Config file to read instead of the default locations
+  completions:
+    options: [files]
+
+examples:
+- seerr search "The Matrix"
+- seerr request create movie 603
+- seerr request list --filter pending
+- seerr -u https://seerr.example.com -k API_KEY status
+
+footer: |-
+  Settings are resolved in this order: flags, environment variables, config file.
+
+  The config file is read from the first of these that exists:
+    ~/.config/seerr/seerr-cli.yaml
+    ~/.config/seerr-cli.yaml
+    ~/.seerr-cli.yaml
+  When XDG_CONFIG_HOME is set, it replaces ~/.config.
+
+  Save settings with `seerr config set`, or write the file yourself:
+    url: https://seerr.example.com
+    api_key: YOUR_API_KEY
+    timeout: 30
+    http_client: curl
+
+commands:
+- name: search
+  help: Search for movies, TV shows, and people
+  group: Browse
+  args:
+  - name: query
+    required: true
+    help: Search terms
+  flags:
+  - &json
+    long: --json
+    short: -j
+    help: Print raw JSON instead of a table
+  - &page
+    long: --page
+    short: -p
+    arg: number
+    help: Page of results to show
+    default: "1"
+    validate: positive_integer
+  - &language
+    long: --language
+    short: -l
+    arg: code
+    help: Language for titles and overviews, e.g. en or fr
+  examples:
+  - seerr search "The Matrix"
+  - seerr search "Star Trek" --page 2
+
+- name: trending
+  help: Show trending movies and TV shows
+  group: Browse
+  flags:
+  - *json
+  - *page
+  - *language
+  - long: --type
+    short: -t
+    arg: type
+    help: Media type to show
+    allowed: [all, movie, tv]
+    default: all
+  - long: --window
+    short: -w
+    arg: window
+    help: Trending time window
+    allowed: [day, week]
+    default: day
+
+- name: movie
+  help: Show details for a movie
+  group: Browse
+  args:
+  - &title_or_id
+    name: title_or_id
+    required: true
+    help: TMDB ID, or a title to search for. Uses the first match, or asks which one when several have that exact title.
+  flags:
+  - *json
+  - *language
+  - &year
+    long: --year
+    short: -y
+    arg: year
+    help: Only match titles released in this year. Also makes a number like 1917 count as a title.
+    validate: integer
+  examples:
+  - seerr movie 603
+  - seerr movie "The Matrix"
+  - seerr movie Dune --year 1984
+
+- name: tv
+  help: Show details for a TV show, or the episodes in one season
+  group: Browse
+  args:
+  - *title_or_id
+  flags:
+  - *json
+  - *language
+  - *year
+  - long: --season
+    short: -s
+    arg: number
+    help: Show the episode list for this season
+    validate: integer
+  examples:
+  - seerr tv 1399
+  - seerr tv "Game of Thrones" --season 1
+
+- name: media
+  help: Browse media tracked by Seerr
+  group: Browse
+
+  commands:
+  - name: list
+    alias: ls
+    help: List media
+    flags:
+    - *json
+    - *page
+    - &take
+      long: --take
+      arg: number
+      help: Number of results per page
+      default: "20"
+      validate: positive_integer
+    - long: --filter
+      short: -f
+      arg: status
+      help: Only show media with this status
+      allowed: [all, available, partial, allavailable, processing, pending, deleted]
+    - long: --sort
+      arg: field
+      help: Sort order
+      allowed: [added, modified, mediaAdded]
+      default: added
+
+- name: request
+  alias: requests
+  help: Manage media requests
+  group: Manage
+
+  commands:
+  - name: list
+    alias: ls
+    help: List media requests
+    flags:
+    - *json
+    - *page
+    - *take
+    - long: --filter
+      short: -f
+      arg: status
+      help: Only show requests with this status
+      allowed: [all, approved, available, pending, processing, unavailable, failed, deleted, completed]
+    - long: --type
+      short: -t
+      arg: type
+      help: Only show requests for this media type
+      allowed: [all, movie, tv]
+      default: all
+    - long: --sort
+      arg: field
+      help: Sort order
+      allowed: [added, modified]
+      default: added
+    - long: --user
+      arg: id
+      help: Only show requests made by this user ID
+      validate: integer
+    examples:
+    - seerr request list --filter pending
+    - seerr request list --type tv --take 50 --page 2
+
+  - name: get
+    help: Show a single request
+    args:
+    - &request_id
+      name: id
+      required: true
+      help: Request ID
+      validate: integer
+    flags:
+    - *json
+
+  - name: create
+    help: Request a movie or TV show
+    args:
+    - name: type
+      required: true
+      help: Media type
+      allowed: [movie, tv]
+    - *title_or_id
+    flags:
+    - *json
+    - *year
+    - long: --seasons
+      short: -s
+      arg: list
+      help: "TV only: comma-separated season numbers, or 'all' (default: all)"
+      validate: seasons
+    - long: --4k
+      help: Request the 4K version
+    examples:
+    - seerr request create movie 603
+    - seerr request create movie "The Matrix" --4k
+    - seerr request create tv "Game of Thrones" --seasons 1,2
+
+  - name: approve
+    help: Approve a pending request
+    args:
+    - *request_id
+    flags:
+    - *json
+
+  - name: decline
+    help: Decline a pending request
+    args:
+    - *request_id
+    flags:
+    - *json
+
+  - name: retry
+    help: Retry a failed request
+    args:
+    - *request_id
+    flags:
+    - *json
+
+  - name: delete
+    help: Delete a request
+    args:
+    - *request_id
+
+  - name: count
+    help: Show request counts by type and status
+    flags:
+    - *json
+
+- name: issue
+  alias: issues
+  help: Manage reported issues
+  group: Manage
+
+  commands:
+  - name: list
+    alias: ls
+    help: List issues
+    flags:
+    - *json
+    - *page
+    - *take
+    - long: --filter
+      short: -f
+      arg: status
+      help: Only show issues with this status
+      allowed: [all, open, resolved]
+      default: open
+    - long: --sort
+      arg: field
+      help: Sort order
+      allowed: [added, modified]
+      default: added
+
+  - name: create
+    help: Report a problem with a movie or TV show
+    args:
+    - name: type
+      required: true
+      help: Media type
+      allowed: [movie, tv]
+    - *title_or_id
+    - name: message
+      required: true
+      help: Description of the problem
+    flags:
+    - *json
+    - *year
+    - long: --problem
+      arg: kind
+      help: Kind of problem
+      allowed: [video, audio, subtitles, other]
+      default: other
+    - long: --season
+      short: -s
+      arg: number
+      help: "TV only: season with the problem (default: all seasons)"
+      validate: positive_integer
+    - long: --episode
+      short: -e
+      arg: number
+      help: "TV only: episode with the problem (default: all episodes)"
+      validate: positive_integer
+      needs: [--season]
+    examples:
+    - seerr issue create movie "The Matrix" "Audio is out of sync" --problem audio
+    - seerr issue create tv "Game of Thrones" "No subtitles" --problem subtitles --season 1 --episode 4
+
+  - name: get
+    help: Show an issue and its comments
+    args:
+    - &issue_id
+      name: id
+      required: true
+      help: Issue ID
+      validate: integer
+    flags:
+    - *json
+
+  - name: comment
+    help: Add a comment to an issue
+    args:
+    - *issue_id
+    - name: message
+      required: true
+      help: Comment text
+    flags:
+    - *json
+
+  - name: resolve
+    help: Mark an issue as resolved
+    args:
+    - *issue_id
+    flags:
+    - *json
+
+  - name: reopen
+    help: Reopen a resolved issue
+    args:
+    - *issue_id
+    flags:
+    - *json
+
+- name: status
+  help: Show the Seerr server version and update status
+  group: Server
+  flags:
+  - *json
+
+- name: whoami
+  help: Show the user the API key belongs to
+  group: Server
+  flags:
+  - *json
+
+- name: user
+  alias: users
+  help: Show Seerr users
+  group: Server
+
+  commands:
+  - name: list
+    alias: ls
+    help: List users
+    flags:
+    - *json
+    - *page
+    - *take
+    - long: --sort
+      arg: field
+      help: Sort order
+      allowed: [created, updated, requests, displayname, usertype, role]
+      default: created
+
+  - name: get
+    help: Show a single user
+    args:
+    - name: id
+      required: true
+      help: User ID
+      validate: integer
+    flags:
+    - *json
+
+- name: api
+  help: Send a raw request to any Seerr API endpoint
+  group: Server
+  args:
+  - name: method
+    required: true
+    help: HTTP method
+    allowed: [GET, POST, PUT, DELETE, PATCH]
+  - name: path
+    required: true
+    help: Endpoint path below /api/v1, including any query string
+  flags:
+  - long: --data
+    short: -d
+    arg: json
+    help: JSON request body, @FILE to read it from a file, or - to read stdin
+  examples:
+  - seerr api GET /settings/about
+  - seerr api GET "/discover/movies?genre=18&page=2"
+  - seerr api POST /settings/jobs/plex-recently-added-scan/run
+  - seerr api PUT /user/2 --data '{"username":"alice"}'
+
+- name: config
+  help: Inspect the CLI configuration
+  group: Setup
+
+  commands:
+  - name: show
+    help: Show the settings in effect, with the API key masked
+
+  - name: set
+    help: Save a setting to the config file
+    args:
+    - name: key
+      required: true
+      help: Setting to save
+      allowed: [url, api_key, timeout, http_client]
+    - name: value
+      help: Value to save. Leave it out to be prompted, which keeps your API key out of your shell history.
+    examples:
+    - seerr config set url https://seerr.example.com
+    - seerr config set api_key
+    - seerr config set timeout 60
+    - pass show seerr | seerr config set api_key
+
+- name: completions
+  help: Print a shell completion script
+  group: Setup
+  args:
+  - name: shell
+    help: Shell to print the script for
+    allowed: [bash, zsh]
+    default: bash
+  examples:
+  - source <(seerr completions bash)
+  - source <(seerr completions zsh)

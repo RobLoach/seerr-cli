@@ -1,0 +1,2 @@
+# jq filters are single-quoted on purpose; their $variables belong to jq.
+disable=SC2016

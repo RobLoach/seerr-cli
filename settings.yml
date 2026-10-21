@@ -1,0 +1,5 @@
+# Bashly settings. Anything not set here uses Bashly's default.
+# See https://bashly.dev/usage/settings/
+
+completions: bash,zsh
+env: production

@@ -1,0 +1,28 @@
+# Seerr-CLI: https://github.com/robloach/seerr-cli
+#
+# Copy this file to one of these locations, then fill in your own values:
+#
+#   ~/.config/seerr/seerr-cli.yaml
+#   ~/.config/seerr-cli.yaml
+#   ~/.seerr-cli.yaml
+#
+# Or let seerr write the file for you:
+#
+#   seerr config set url https://seerr.example.com
+#   seerr config set api_key
+#
+# Environment variables (SEERR_URL, SEERR_API_KEY, SEERR_TIMEOUT, and
+# SEERR_HTTP_CLIENT) override this file. Keep comments on their own lines; a
+# comment after a value becomes part of the value.
+
+# Seerr server URL.
+url: https://seerr.example.com
+
+# API Key, from Settings > General in the Seerr web UI.
+api_key: YOUR_API_KEY
+
+# Seconds to wait before giving up on server requests. Default: 30.
+# timeout: 30
+
+# HTTP client to use: curl or wget. Default: curl, if available.
+# http_client: curl
