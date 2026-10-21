@@ -1,8 +1,6 @@
 # seerr-cli
 
-A command-line client for [Seerr](https://docs.seerr.dev), the media request manager. Search for movies and TV shows, make and approve requests, and manage issues from your terminal.
-
-Homepage, source code, and issues: [github.com/robloach/seerr-cli](https://github.com/robloach/seerr-cli)
+[seerr-cli](https://github.com/robloach/seerr-cli) is a command-line client for [Seerr](https://docs.seerr.dev), the media request manager. Search for movies and TV shows, make and approve requests, and manage issues from your terminal.
 
 ```console
 $ seerr search "The Matrix"
@@ -43,40 +41,22 @@ Or use your AI Agent to install it:
 Install seerr-cli and its Agent Skill by following the README at https://github.com/robloach/seerr-cli
 ```
 
-### Tab Completion (Optional)
-
-To get tab completion, add one of these lines to your shell's startup file:
-
-```bash
-source <(seerr completions bash)  # ~/.bashrc
-source <(seerr completions zsh)   # ~/.zshrc, after compinit
-```
-
 ## Configuration
 
-There are three methods to provide the configuration for Seerr CLI...
-
-### Config File
-
- Save both to the config file:
-
-```bash
-seerr config set url https://seerr.example.com
-seerr config set api_key
-```
-
-Leave out the value, as with `api_key` above, and `seerr` prompts for it. The API key prompt doesn't echo what you type, and the key stays out of your shell history. You can also pipe the value in, for example `pass show seerr | seerr config set api_key`.
-
-`seerr config set` updates the config file in use, or creates `~/.config/seerr/seerr-cli.yaml` if there isn't one. It makes the file readable only by you, since it holds your API key.
-
-To write the file yourself, start from [`.seerr-cli.example.yaml`](.seerr-cli.example.yaml):
+Create a `seerr-cli.yaml` configuration file in `~/.config/seerr-cli.yaml`, following the example in [`.seerr-cli.example.yaml`](.seerr-cli.example.yaml):
 
 ```yaml
 url: https://seerr.example.com
 api_key: YOUR_API_KEY
 ```
 
-`seerr` reads the first of these files that exists:
+Alternatively, you can set it by using seer yourself:
+```bash
+seerr config set url https://seerr.example.com
+seerr config set api_key
+```
+
+`seerr` checks available configuration paths from the following:
 
 1. `~/.config/seerr/seerr-cli.yaml`
 2. `~/.config/seerr-cli.yaml`
@@ -100,7 +80,7 @@ The `--url`, `--api-key`, and `--config` flags go before the command:
 seerr -u https://seerr.example.com -k YOUR_API_KEY status
 ```
 
-To check which settings are in effect, after flags, environment variables, and the config file are combined:
+Verify the settings with `seerr config show`:
 
 ```console
 $ seerr config show
@@ -109,8 +89,6 @@ URL:          https://seerr.example.com
 API key:      abcd...wxyz
 HTTP client:  curl
 ```
-
-The config file supports the `url`, `api_key`, `timeout`, and `http_client` keys; [`.seerr-cli.example.yaml`](.seerr-cli.example.yaml) lists them all. Keys must use underscores, and a `# comment` on the same line as a value becomes part of the value, so put comments on their own lines.
 
 ## Usage
 
@@ -216,15 +194,18 @@ Requests time out after 30 seconds. Change that with `SEERR_TIMEOUT` or `seerr c
 
 [`skills/seerr`](skills/seerr/SKILL.md) is an [Agent Skill](https://agentskills.io) that teaches AI agents how to use `seerr`: how to find a title and its ID, what the status codes mean, and how to request, approve, and report problems. It tells agents to ask you before changing anything on your server, and never to read your API key.
 
-To use it with [Claude Code](https://claude.com/claude-code), link it into your skills folder. Run this from inside a clone of the [repository](https://github.com/robloach/seerr-cli):
-
-```bash
-ln -s "$PWD/skills/seerr" ~/.claude/skills/seerr
+```
+Install the SKILL in this repository: https://github.com/robloach/seerr-cli
 ```
 
-If `seerr` isn't installed yet, the skill tells the agent how to install it, and to ask you first.
+## Tab Completion (Optional)
 
-Then ask things like "is Slow Horses season 5 available?" or "request Dune from 1984". For other agents that support Agent Skills, see their documentation for where skills go.
+To get tab completion, add one of these lines to your shell's startup file:
+
+```bash
+source <(seerr completions bash)  # ~/.bashrc
+source <(seerr completions zsh)   # ~/.zshrc, after compinit
+```
 
 ## Development
 
