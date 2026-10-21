@@ -17,22 +17,9 @@ Requested The Matrix Reloaded (2003) as request #12 (pending)
 
 ## Requirements
 
-- Bash 4.2 or newer
+- Bash 4.2+, Zsh, Fish, etc
 - `curl` or `wget`
 - [`jq`](https://jqlang.org)
-
-### Shells
-
-`seerr` is a Bash script, but you don't have to use Bash as your shell. The script starts Bash itself, so you can run it from any shell, as long as Bash 4.2 or newer is installed:
-
-| Shell | Run `seerr` | Tab completion |
-|---|---|---|
-| Bash | Yes | Yes |
-| Zsh | Yes | Yes |
-| Fish | Yes | No |
-| Other shells (dash, ksh, Nushell, ...) | Yes | No |
-
-Run it as `seerr`, or `bash seerr`. `sh seerr` fails, because it makes a different shell read the script.
 
 ## Installation
 
@@ -49,6 +36,14 @@ Or clone the repository, which also gets you the [AI agent skill](#ai-agents):
 git clone https://github.com/robloach/seerr-cli.git
 install -m 755 seerr-cli/seerr ~/.local/bin/seerr
 ```
+
+Or use your AI Agent to install it:
+
+```md
+Install seerr-cli and its Agent Skill by following the README at https://github.com/robloach/seerr-cli
+```
+
+### Tab Completion (Optional)
 
 To get tab completion, add one of these lines to your shell's startup file:
 
