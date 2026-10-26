@@ -1,47 +1,136 @@
 #!/usr/bin/env bash
-# Run the tests against a fake Seerr server.
+# Tests for seerr. Run them with: test/approve
 #
-# Usage: test/approve [TEST_FILE...]
-#
-# Each *_test.sh file compares the output of seerr commands with the approved
-# output in test/approvals/. When output is new or has changed, you see the
-# difference and are asked whether to approve it. Set AUTO_APPROVE=1 to
-# approve everything. In CI, any difference fails the tests.
-set -euo pipefail
-
+# Each test runs a seerr command and compares its output with the approved
+# output in test/approvals/. When the output is new or has changed, you see
+# the difference and are asked whether to approve it. In CI, any difference
+# fails the tests.
 cd "$(dirname "$0")"
-tmp=$(mktemp -d)
-server=""
-trap '[[ -n $server ]] && kill "$server"; rm -rf "$tmp"' EXIT
+source approvals.bash
 
-python3 mock_server.py "$tmp" &
-server=$!
-for _ in {1..50}; do
-  [[ -s $tmp/port ]] && break
-  sleep 0.1
-done
-if [[ ! -s $tmp/port ]]; then
-  echo "The fake Seerr server did not start." >&2
-  exit 1
-fi
+rm -rf tmp
+mkdir -p tmp/home
+export HOME=$PWD/tmp/home LC_ALL=C
+unset SEERR_URL SEERR_API_KEY SEERR_CONFIG SEERR_TIMEOUT SEERR_HTTP_CLIENT XDG_CONFIG_HOME
 
-export LC_ALL=C
-export SEERR_TEST_ROOT=$PWD/.. SEERR_TEST_DIR=$tmp
-port=$(<"$tmp/port")
-export SEERR_TEST_URL=http://127.0.0.1:$port
-export SEERR_URL=$SEERR_TEST_URL SEERR_API_KEY=test-key
-unset SEERR_CONFIG SEERR_TIMEOUT SEERR_HTTP_CLIENT XDG_CONFIG_HOME
+# Stands in for seerr_request: answers API requests from fixtures/ instead of
+# a Seerr server, and logs them for `sent`. The fixture is named after the
+# path, so GET /movie/603 reads fixtures/movie-603.json. Set fake_status and
+# fake_body to answer with something else.
+# shellcheck disable=SC2034 # seerr reads the variables this sets
+fake_request() {
+  local fixture=${2#/}
+  fixture=fixtures/${fixture//[^a-zA-Z0-9]/-}.json
 
-tests=("$@")
-if ((${#tests[@]} == 0)); then
-  tests=(*_test.sh)
-fi
+  echo "$1 $2${3:+ $3}" >>tmp/requests
+  seerr_error=""
+  if [[ -n ${fake_status:-} ]]; then
+    seerr_status=$fake_status seerr_body=${fake_body:-}
+  elif [[ -f $fixture ]]; then
+    seerr_status=200 seerr_body=$(<"$fixture")
+  else
+    seerr_status=404 seerr_body='{"message": "not found"}'
+  fi
+}
+export -f fake_request
 
-status=0
-for test in "${tests[@]}"; do
-  # Each test file gets an empty home directory, so no config file is found.
-  home=$tmp/home/${test%.sh}
-  mkdir -p "$home"
-  HOME=$home bash "$test" || status=1
-done
-exit "$status"
+# Run a seerr command with fake_request in place of seerr_request, showing
+# stderr in the output and the home directory as ~. Each command gets its
+# own bash, because approvals.bash runs commands where set -e is ignored, and
+# seerr relies on it to stop at errors.
+seerr() {
+  : >tmp/requests
+  bash -c 'source ../seerr; seerr_request() { fake_request "$@"; }; start "$@"' seerr "$@" 2>&1 | sed "s|$HOME|~|g"
+  return "${PIPESTATUS[0]}"
+}
+
+# Print the API requests the last seerr command made. They're sorted, because
+# title lookups run in parallel.
+sent() {
+  sort tmp/requests
+}
+
+describe "config"
+  it "shows what isn't set"
+    approve "seerr config show"
+
+  it "saves settings to a file only you can read"
+    approve "seerr config set url https://seerr.example.com"
+    approve "echo abcd1234efgh | seerr config set api_key"
+    approve "cat ~/.config/seerr/seerr-cli.yaml" "config_file"
+    approve "ls -l ~/.config/seerr/seerr-cli.yaml | cut -c1-10" "config_file_permissions"
+    approve "seerr config show" "config_show_saved"
+
+  it "prefers flags, then environment variables, to the config file"
+    approve "SEERR_URL=https://env.example seerr -u https://flag.example config show"
+
+  it "rejects a bad value"
+    approve "seerr config set url ftp://seerr.example.com"
+    expect_exit_code 1
+
+  it "shows the settings, then fails, when the config file has a bad value"
+    echo "timeout: soon" >>~/.config/seerr/seerr-cli.yaml
+    approve "seerr config show" "config_show_bad_value"
+    expect_exit_code 1
+
+rm ~/.config/seerr/seerr-cli.yaml
+export SEERR_URL=https://seerr.example.com SEERR_API_KEY=test-key
+
+describe "title lookup"
+  it "takes a number as a TMDB ID"
+    approve "seerr movie 603"
+
+  it "prefers an exact title to the first result"
+    approve "seerr movie Dune"
+
+  it "keeps only results from --year"
+    approve "seerr movie Dune --year 1984"
+
+  it "skips an exact title that few people have voted on"
+    approve "seerr movie Matrix"
+
+  it "searches for a number when --year is given"
+    approve "seerr movie 1917 --year 2019"
+
+  it "gives up after three pages of results"
+    approve "seerr movie Hamlet --year 1921"
+    expect_exit_code 1
+    approve "sent" "sent_movie_hamlet_1921"
+
+describe "commands"
+  it "searches"
+    approve "seerr search Dune"
+
+  it "shows a TV show and its seasons"
+    approve "seerr tv 1399"
+
+  it "lists requests with their titles"
+    approve "seerr request list"
+
+  it "requests a TV show"
+    approve "seerr request create tv 1399 --seasons 1,2 --4k"
+    approve "sent" "sent_request_create"
+
+  it "fails when Seerr creates no request"
+    approve "fake_status=202 fake_body='{\"message\": \"No seasons available to request\"}' seerr request create tv 79063" "request_create_no_seasons"
+    expect_exit_code 1
+
+  it "approves a request"
+    approve "seerr request approve 12"
+
+  it "reports an issue"
+    approve "seerr issue create movie 603 'Audio is out of sync' --problem audio"
+    approve "sent" "sent_issue_create"
+
+  it "only reports issues for media in Seerr"
+    approve "seerr issue create movie 841 'No sound'"
+    expect_exit_code 1
+
+describe "errors"
+  it "explains a rejected API key"
+    approve "fake_status=403 fake_body='{\"error\": \"Forbidden\"}' seerr whoami" "error_api_key"
+    expect_exit_code 1
+
+  it "rejects a response that isn't JSON"
+    approve "fake_status=200 fake_body='<html>Sign in</html>' seerr whoami" "error_not_json"
+    expect_exit_code 1

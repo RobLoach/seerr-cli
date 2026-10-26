@@ -3,3 +3,6 @@
 
 completions: bash,zsh
 env: production
+
+# Let the tests source seerr to load its functions without running it.
+enable_sourcing: always

@@ -30,7 +30,7 @@ jobs:
           }
 
       - name: ShellCheck
-        run: shellcheck seerr test/approve test/*.sh
+        run: shellcheck seerr test/approve
 
       - name: Test
         run: test/approve

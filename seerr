@@ -7679,4 +7679,6 @@ start() {
   run "${command_line_args[@]}"
 }
 
-start "$@"
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  start "$@"
+fi

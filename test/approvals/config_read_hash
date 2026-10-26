@@ -1,5 +1,0 @@
-Config file:  ~/.config/seerr/seerr-cli.yaml
-URL:          https://hash.example/#top
-API key:      not set
-Timeout:      30s
-HTTP client:  curl

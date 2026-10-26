@@ -1,2 +1,0 @@
-GET /api/v1/movie/603
-POST /api/v1/request {"mediaType":"movie","mediaId":603,"is4k":false}

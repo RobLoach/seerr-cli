@@ -1,5 +1,0 @@
-Config file:  ~/.config/seerr/seerr-cli.yaml
-URL:          https://quoted.example
-API key:      not set
-Timeout:      30s
-HTTP client:  wget

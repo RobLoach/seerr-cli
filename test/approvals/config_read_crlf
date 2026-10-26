@@ -1,5 +1,0 @@
-Config file:  ~/.config/seerr/seerr-cli.yaml
-URL:          https://crlf.example
-API key:      not set
-Timeout:      9s
-HTTP client:  curl

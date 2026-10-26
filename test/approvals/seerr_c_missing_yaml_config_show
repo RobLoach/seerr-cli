@@ -1,6 +1,0 @@
-Config file:  ~/missing.yaml
-URL:          not set
-API key:      not set
-Timeout:      30s
-HTTP client:  curl
-seerr: config file not found: ~/missing.yaml

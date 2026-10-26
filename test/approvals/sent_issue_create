@@ -1,2 +1,2 @@
-GET /api/v1/movie/603
-POST /api/v1/issue {"issueType":2,"message":"Audio is out of sync","mediaId":5,"problemSeason":0,"problemEpisode":0}
+GET /movie/603
+POST /issue {"issueType":2,"message":"Audio is out of sync","mediaId":5,"problemSeason":0,"problemEpisode":0}

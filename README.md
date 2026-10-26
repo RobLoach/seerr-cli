@@ -233,12 +233,9 @@ src/
     yaml.sh           Bashly's YAML library
     validations/      argument validators
 test/
-  approve             runs the tests
-  *_test.sh           the tests
+  approve             the tests
   approvals/          approved output for each test
-  mock_server.py      a fake Seerr server for the tests
-  fixtures/           the fake server's responses
-  helpers.sh          functions the tests share
+  fixtures/           API responses the tests use instead of a Seerr server
   approvals.bash      the approvals.bash test library, v0.5.1
 ```
 
@@ -246,13 +243,13 @@ Regenerate the script, check it with [ShellCheck](https://www.shellcheck.net), a
 
 ```bash
 bashly generate   # settings.yml makes this the production build
-shellcheck seerr test/approve test/*.sh
+shellcheck seerr test/approve
 test/approve
 ```
 
 Check the generated `seerr` script rather than the files in `src/`. It contains all of them, so ShellCheck can see variables that one file sets and another uses. CI fails if the committed `seerr` doesn't match what `bashly generate` makes from `src/`.
 
-The tests need Python 3 for the fake server, and both curl and wget, because every HTTP test runs once with each. Each test runs a `seerr` command and compares its output with the approved output in `test/approvals/`. When the output is new or has changed, you see the difference and are asked whether to approve it. Commit the approved files along with your change. `AUTO_APPROVE=1 test/approve` approves everything, so review the changes in `test/approvals/` afterwards.
+The tests don't need a Seerr server. They load `seerr` and answer its API requests from `test/fixtures/`, so the curl and wget code in `http.sh` isn't tested. Each test runs a `seerr` command and compares its output with the approved output in `test/approvals/`. When the output is new or has changed, you see the difference and are asked whether to approve it. Commit the approved files along with your change. `AUTO_APPROVE=1 test/approve` approves everything, so review the changes in `test/approvals/` afterwards.
 
 ## License
 
