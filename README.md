@@ -56,7 +56,7 @@ seerr config set url https://seerr.example.com
 seerr config set api_key
 ```
 
-`seerr` checks available configuration paths from the following:
+The configuration can be found in the following paths:
 
 1. `~/.config/seerr/seerr-cli.yaml`
 2. `~/.config/seerr-cli.yaml`
@@ -64,7 +64,9 @@ seerr config set api_key
 
 When `XDG_CONFIG_HOME` is set, it replaces `~/.config` in the first two paths.
 
-You can also set these values with environment variables or flags. Flags take precedence over environment variables, which take precedence over the config file.
+### Environment Variables
+
+These can be set with environment variables, or command-line parameters:
 
 | Setting | Flag | Environment variable | Config key |
 |---|---|---|---|
@@ -79,6 +81,8 @@ The `--url`, `--api-key`, and `--config` flags go before the command:
 ```bash
 seerr -u https://seerr.example.com -k YOUR_API_KEY status
 ```
+
+### Verification
 
 Verify the settings with `seerr config show`:
 
