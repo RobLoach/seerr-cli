@@ -1,0 +1,5 @@
+{
+  "method": "GET",
+  "path": "/api/v1/echo?page=2&genre=18",
+  "body": null
+}

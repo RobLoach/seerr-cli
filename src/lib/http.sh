@@ -21,6 +21,21 @@ seerr_api() {
   esac
 }
 
+## Exit with an error unless JSON has an id, as everything Seerr creates
+## does. Seerr answers some refusals with a 2xx status and only a message,
+## such as 202 "No seasons available to request". HINT goes under the error.
+## Usage: seerr_require_id JSON WHAT [HINT]
+seerr_require_id() {
+  local message
+
+  if jq -e '.id != null' >/dev/null 2>&1 <<<"$1"; then
+    return
+  fi
+
+  message=$(seerr_message "$1")
+  seerr_die "no $2 created: ${message:-the response had no ID}${3:+$'\n'$3}"
+}
+
 ## Send a request to the Seerr API without exiting on failure.
 ## Sets seerr_status (HTTP status, or 000 when the server could not be
 ## reached), seerr_body, and seerr_error (the HTTP client's error text).
@@ -86,11 +101,17 @@ seerr_request_wget() {
   seerr_error=$(grep -v '^ ' "$tmp/error" | tail -n 1) || true
 }
 
+## Print the message in a response from Seerr, or nothing when it has none.
+## Most errors use "message", but authentication errors use "error".
+seerr_message() {
+  jq -r '.message // .error // empty' <<<"$1" 2>/dev/null || true
+}
+
 ## Describe a failed response, using the server's message when it sent one.
 seerr_http_error() {
   local message
 
-  message=$(jq -r '.message // .error // empty' <<<"$seerr_body" 2>/dev/null) || message=""
+  message=$(seerr_message "$seerr_body")
   printf 'HTTP %s%s' "$seerr_status" "${message:+: $message}"
 
   case $seerr_status in

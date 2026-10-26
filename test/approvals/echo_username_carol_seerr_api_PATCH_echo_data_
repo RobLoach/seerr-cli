@@ -1,0 +1,7 @@
+{
+  "method": "PATCH",
+  "path": "/api/v1/echo",
+  "body": {
+    "username": "carol"
+  }
+}

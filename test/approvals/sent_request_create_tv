@@ -1,0 +1,2 @@
+GET /api/v1/tv/1399
+POST /api/v1/request {"mediaType":"tv","mediaId":1399,"is4k":true,"seasons":[1,2]}

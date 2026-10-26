@@ -1,0 +1,5 @@
+Config file:  ~/.config/seerr/seerr-cli.yaml
+URL:          https://comment.example
+API key:      not set
+Timeout:      45s
+HTTP client:  curl

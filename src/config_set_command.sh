@@ -21,8 +21,9 @@ fi
 if [[ -z $value ]]; then
   seerr_die "no value given for $key"
 fi
-if [[ $value == *$'\n'* ]]; then
-  seerr_die "$key cannot contain a line break"
+# No setting can contain a space, and in the config file " #" starts a comment.
+if [[ $value == *[[:space:]]* ]]; then
+  seerr_die "$key cannot contain spaces or line breaks"
 fi
 error=$(seerr_config_validate "$key" "$value")
 if [[ -n $error ]]; then

@@ -94,19 +94,32 @@ seerr_config_candidates() {
 
 ## Read the settings from a YAML config file into seerr_config_url,
 ## seerr_config_api_key, seerr_config_timeout, and seerr_config_http_client.
-## Values are assigned as plain strings and never evaluated, so the file
-## cannot run code. Unknown keys are ignored.
+## Only top-level "key: value" lines are read, the same lines that
+## seerr_config_write writes. As in YAML, a value may be in single or double
+## quotes, and a # after a space starts a comment. Values are assigned as
+## plain strings and never evaluated, so the file cannot run code. Unknown
+## keys are ignored.
 seerr_config_read() {
   local line key value
+  local double_quoted='^[[:space:]]*"([^"]*)"[[:space:]]*(#.*)?$'
+  local single_quoted="^[[:space:]]*'([^']*)'[[:space:]]*(#.*)?\$"
 
   [[ -r $1 ]] || seerr_die "cannot read config file: $1"
 
-  while IFS= read -r line; do
-    key=${line%%=*}
-    value=${line#*=}
-    value=${value#\"}
-    value=${value%\"}
-    value=${value%"${value##*[![:space:]]}"}
+  while IFS= read -r line || [[ -n $line ]]; do
+    if [[ ! $line =~ ^([a-z_]+)[[:space:]]*:(.*)$ ]]; then
+      continue
+    fi
+    key=${BASH_REMATCH[1]}
+    value=${BASH_REMATCH[2]}
+
+    if [[ $value =~ $double_quoted || $value =~ $single_quoted ]]; then
+      value=${BASH_REMATCH[1]}
+    else
+      value=${value%%[[:space:]]#*}
+      value=${value#"${value%%[![:space:]]*}"}
+      value=${value%"${value##*[![:space:]]}"}
+    fi
 
     case $key in
       url) seerr_config_url=$value ;;
@@ -114,7 +127,7 @@ seerr_config_read() {
       timeout) seerr_config_timeout=$value ;;
       http_client) seerr_config_http_client=$value ;;
     esac
-  done < <(yaml_load "$1")
+  done <"$1"
 }
 
 ## Set a top-level KEY to VALUE in a YAML config file, replacing an existing

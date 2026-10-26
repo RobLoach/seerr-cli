@@ -1,0 +1,2 @@
+seerr: no request created: No seasons available to request
+Seerr leaves out seasons that are already requested or available, and --seasons all leaves out specials (season 0).

@@ -1,0 +1,32 @@
+{
+  "pageInfo": {"pages": 1, "pageSize": 20, "results": 3, "page": 1},
+  "results": [
+    {
+      "id": 14,
+      "status": 1,
+      "type": "tv",
+      "is4k": false,
+      "createdAt": "2026-10-20T18:01:00.000Z",
+      "media": {"mediaType": "tv", "tmdbId": 1399, "status": 3, "status4k": 1},
+      "requestedBy": {"id": 2, "displayName": "alice"}
+    },
+    {
+      "id": 13,
+      "status": 2,
+      "type": "movie",
+      "is4k": true,
+      "createdAt": "2026-10-19T09:30:00.000Z",
+      "media": {"mediaType": "movie", "tmdbId": 438631, "status": 5, "status4k": 3},
+      "requestedBy": {"id": 3, "username": "bob"}
+    },
+    {
+      "id": 12,
+      "status": 5,
+      "type": "movie",
+      "is4k": false,
+      "createdAt": "2026-10-18T21:15:00.000Z",
+      "media": {"mediaType": "movie", "tmdbId": 603, "status": 5, "status4k": 1},
+      "requestedBy": {"id": 2, "displayName": "alice"}
+    }
+  ]
+}

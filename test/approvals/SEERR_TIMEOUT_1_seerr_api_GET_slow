@@ -1,0 +1,2 @@
+seerr: could not reach http://seerr.test: CLIENT ERROR
+Gave up after 1s. To wait longer, set SEERR_TIMEOUT or run: seerr config set timeout SECONDS

@@ -1314,15 +1314,25 @@ seerr_config_candidates() {
 
 seerr_config_read() {
   local line key value
+  local double_quoted='^[[:space:]]*"([^"]*)"[[:space:]]*(#.*)?$'
+  local single_quoted="^[[:space:]]*'([^']*)'[[:space:]]*(#.*)?\$"
 
   [[ -r $1 ]] || seerr_die "cannot read config file: $1"
 
-  while IFS= read -r line; do
-    key=${line%%=*}
-    value=${line#*=}
-    value=${value#\"}
-    value=${value%\"}
-    value=${value%"${value##*[![:space:]]}"}
+  while IFS= read -r line || [[ -n $line ]]; do
+    if [[ ! $line =~ ^([a-z_]+)[[:space:]]*:(.*)$ ]]; then
+      continue
+    fi
+    key=${BASH_REMATCH[1]}
+    value=${BASH_REMATCH[2]}
+
+    if [[ $value =~ $double_quoted || $value =~ $single_quoted ]]; then
+      value=${BASH_REMATCH[1]}
+    else
+      value=${value%%[[:space:]]#*}
+      value=${value#"${value%%[![:space:]]*}"}
+      value=${value%"${value##*[![:space:]]}"}
+    fi
 
     case $key in
       url) seerr_config_url=$value ;;
@@ -1330,7 +1340,7 @@ seerr_config_read() {
       timeout) seerr_config_timeout=$value ;;
       http_client) seerr_config_http_client=$value ;;
     esac
-  done < <(yaml_load "$1")
+  done <"$1"
 }
 
 seerr_config_write() {
@@ -1380,6 +1390,17 @@ seerr_api() {
     000) seerr_die "$(seerr_connect_error)" ;;
     *) seerr_die "$(seerr_http_error)" ;;
   esac
+}
+
+seerr_require_id() {
+  local message
+
+  if jq -e '.id != null' >/dev/null 2>&1 <<<"$1"; then
+    return
+  fi
+
+  message=$(seerr_message "$1")
+  seerr_die "no $2 created: ${message:-the response had no ID}${3:+$'\n'$3}"
 }
 
 seerr_request() {
@@ -1436,10 +1457,14 @@ seerr_request_wget() {
   seerr_error=$(grep -v '^ ' "$tmp/error" | tail -n 1) || true
 }
 
+seerr_message() {
+  jq -r '.message // .error // empty' <<<"$1" 2>/dev/null || true
+}
+
 seerr_http_error() {
   local message
 
-  message=$(jq -r '.message // .error // empty' <<<"$seerr_body" 2>/dev/null) || message=""
+  message=$(seerr_message "$seerr_body")
   printf 'HTTP %s%s' "$seerr_status" "${message:+: $message}"
 
   case $seerr_status in
@@ -1655,7 +1680,7 @@ seerr_titles_map() {
 seerr_title_fetch() {
   seerr_request GET "/${1%%:*}/${1#*:}"
   if [[ $seerr_status == 2?? ]]; then
-    jq -c --arg key "$1" '{key: $key, title: (.title // .name)}' <<<"$seerr_body" 2>/dev/null || true
+    jq -c --arg key "$1" "$(seerr_jq_defs) select(.title // .name) | {key: \$key, title: title_year}" <<<"$seerr_body" 2>/dev/null || true
   fi
 }
 
@@ -1700,27 +1725,6 @@ validate_url() {
   if [[ -n $1 && ! $1 =~ ^https?:// ]]; then
     echo "must start with http:// or https://, e.g. https://seerr.example.com"
   fi
-}
-
-yaml_load() {
-  local prefix=$2
-  local s='[[:space:]]*' w='[a-zA-Z0-9_]*'
-  local fs
-
-  fs=$(echo @ | tr @ '\034')
-
-  sed -ne "s|^\($s\):|\1|" \
-    -e "s|^\($s\)\($w\)$s:${s}[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
-    -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p" "$1" |
-    awk -F"$fs" '{
-      indent = length($1)/2;
-      vname[indent] = $2;
-      for (i in vname) {if (i > indent) {delete vname[i]}}
-      if (length($3) > 0) {
-         vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
-         printf("%s%s%s=\"%s\"\n", "'"$prefix"'",vn, $2, $3);
-      }
-    }'
 }
 
 seerr_search_command() {
@@ -1899,6 +1903,11 @@ seerr_request_create_command() {
         {seasons: (if $seasons == "all" then "all" else ($seasons | split(",") | map(tonumber)) end)}
       else {} end')
   json=$(seerr_api POST /request "$body")
+  hint=""
+  if [[ $type == tv ]]; then
+    hint="Seerr leaves out seasons that are already requested or available, and --seasons all leaves out specials (season 0)."
+  fi
+  seerr_require_id "$json" request "$hint"
   status=$(jq -r "$(seerr_jq_defs) .status | request_status" <<<"$json")
   title=${seerr_tmdb_match:-$(seerr_media_label "$json")}
   seerr_report "$json" "Requested $title as request #$(jq -r .id <<<"$json") ($status)"
@@ -1908,14 +1917,14 @@ seerr_request_create_command() {
 seerr_request_approve_command() {
 
   json=$(seerr_api POST "/request/${args[id]}/approve")
-  seerr_report "$json" "Approved request #${args[id]} ($(seerr_media_label "$json"))"
+  seerr_report "$json" "Approved request #${args[id]} for $(seerr_media_label "$json")"
 
 }
 
 seerr_request_decline_command() {
 
   json=$(seerr_api POST "/request/${args[id]}/decline")
-  seerr_report "$json" "Declined request #${args[id]} ($(seerr_media_label "$json"))"
+  seerr_report "$json" "Declined request #${args[id]} for $(seerr_media_label "$json")"
 
 }
 
@@ -1923,7 +1932,7 @@ seerr_request_retry_command() {
 
   json=$(seerr_api POST "/request/${args[id]}/retry")
   status=$(jq -r "$(seerr_jq_defs) .status | request_status" <<<"$json")
-  seerr_report "$json" "Retried request #${args[id]} ($(seerr_media_label "$json")), now $status"
+  seerr_report "$json" "Retried request #${args[id]} for $(seerr_media_label "$json"), now $status"
 
 }
 
@@ -2010,6 +2019,7 @@ seerr_issue_create_command() {
       problemEpisode: $episode
     }')
   json=$(seerr_api POST /issue "$body")
+  seerr_require_id "$json" issue
   seerr_report "$json" "Created issue #$(jq -r .id <<<"$json") for $title"
 
 }
@@ -2050,14 +2060,14 @@ seerr_issue_comment_command() {
 seerr_issue_resolve_command() {
 
   json=$(seerr_api POST "/issue/${args[id]}/resolved")
-  seerr_report "$json" "Resolved issue #${args[id]} ($(seerr_media_label "$json"))"
+  seerr_report "$json" "Resolved issue #${args[id]} for $(seerr_media_label "$json")"
 
 }
 
 seerr_issue_reopen_command() {
 
   json=$(seerr_api POST "/issue/${args[id]}/open")
-  seerr_report "$json" "Reopened issue #${args[id]} ($(seerr_media_label "$json"))"
+  seerr_report "$json" "Reopened issue #${args[id]} for $(seerr_media_label "$json")"
 
 }
 
@@ -2141,11 +2151,6 @@ seerr_api_command() {
 
 seerr_config_show_command() {
 
-  url="not set"
-  if [[ -n $seerr_url ]]; then
-    url="$seerr_url"
-  fi
-
   api_key="not set"
   if [[ -n $seerr_api_key ]]; then
     api_key="****"
@@ -2156,7 +2161,7 @@ seerr_config_show_command() {
 
   printf '%-13s %s\n' \
     "Config file:" "${seerr_config_file:-none found}" \
-    "URL:" "$url" \
+    "URL:" "${seerr_url:-not set}" \
     "API key:" "$api_key" \
     "Timeout:" "${seerr_timeout}s" \
     "HTTP client:" "$seerr_http_client"
@@ -2188,8 +2193,9 @@ seerr_config_set_command() {
   if [[ -z $value ]]; then
     seerr_die "no value given for $key"
   fi
-  if [[ $value == *$'\n'* ]]; then
-    seerr_die "$key cannot contain a line break"
+  # No setting can contain a space, and in the config file " #" starts a comment.
+  if [[ $value == *[[:space:]]* ]]; then
+    seerr_die "$key cannot contain spaces or line breaks"
   fi
   error=$(seerr_config_validate "$key" "$value")
   if [[ -n $error ]]; then

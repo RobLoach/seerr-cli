@@ -1,2 +1,6 @@
 # jq filters are single-quoted on purpose; their $variables belong to jq.
 disable=SC2016
+
+# The test files source approvals.bash and helpers.sh from their own folder.
+source-path=SCRIPTDIR
+external-sources=true

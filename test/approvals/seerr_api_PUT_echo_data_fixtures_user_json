@@ -1,0 +1,7 @@
+{
+  "method": "PUT",
+  "path": "/api/v1/echo",
+  "body": {
+    "username": "bob"
+  }
+}

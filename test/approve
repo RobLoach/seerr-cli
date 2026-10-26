@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Run the tests against a fake Seerr server.
+#
+# Usage: test/approve [TEST_FILE...]
+#
+# Each *_test.sh file compares the output of seerr commands with the approved
+# output in test/approvals/. When output is new or has changed, you see the
+# difference and are asked whether to approve it. Set AUTO_APPROVE=1 to
+# approve everything. In CI, any difference fails the tests.
+set -euo pipefail
+
+cd "$(dirname "$0")"
+tmp=$(mktemp -d)
+server=""
+trap '[[ -n $server ]] && kill "$server"; rm -rf "$tmp"' EXIT
+
+python3 mock_server.py "$tmp" &
+server=$!
+for _ in {1..50}; do
+  [[ -s $tmp/port ]] && break
+  sleep 0.1
+done
+if [[ ! -s $tmp/port ]]; then
+  echo "The fake Seerr server did not start." >&2
+  exit 1
+fi
+
+export LC_ALL=C
+export SEERR_TEST_ROOT=$PWD/.. SEERR_TEST_DIR=$tmp
+port=$(<"$tmp/port")
+export SEERR_TEST_URL=http://127.0.0.1:$port
+export SEERR_URL=$SEERR_TEST_URL SEERR_API_KEY=test-key
+unset SEERR_CONFIG SEERR_TIMEOUT SEERR_HTTP_CLIENT XDG_CONFIG_HOME
+
+tests=("$@")
+if ((${#tests[@]} == 0)); then
+  tests=(*_test.sh)
+fi
+
+status=0
+for test in "${tests[@]}"; do
+  # Each test file gets an empty home directory, so no config file is found.
+  home=$tmp/home/${test%.sh}
+  mkdir -p "$home"
+  HOME=$home bash "$test" || status=1
+done
+exit "$status"
