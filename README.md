@@ -15,7 +15,7 @@ Requested The Matrix Reloaded (2003) as request #12 (pending)
 
 ## Requirements
 
-- Bash 4.2+
+- Bash 4.2+ (macOS comes with Bash 3.2; install a newer one with `brew install bash`)
 - `curl` or `wget`
 - [`jq`](https://jqlang.org)
 
@@ -87,8 +87,11 @@ $ seerr config show
 Config file:  /path/to/seerr-cli.yaml
 URL:          https://seerr.example.com
 API key:      abcd...wxyz
+Timeout:      30s
 HTTP client:  curl
 ```
+
+If the config file is missing or has a bad value, `seerr config show` still shows the settings, then says what's wrong.
 
 ## Usage
 
@@ -227,6 +230,7 @@ src/
     lookup.sh         turns a title into a TMDB ID
     output.sh         renders tables and JSON
     titles.sh         looks up titles for TMDB IDs
+    yaml.sh           Bashly's YAML library
     validations/      argument validators
 test/
   approve             runs the tests
