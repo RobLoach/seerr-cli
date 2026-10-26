@@ -1,9 +1,0 @@
-{
-  "page": 3,
-  "totalPages": 5,
-  "totalResults": 15,
-  "results": [
-    {"id": 39024, "mediaType": "movie", "title": "Hamlet", "releaseDate": "1964-04-01", "voteCount": 90},
-    {"id": 43437, "mediaType": "movie", "title": "Hamlet", "releaseDate": "1969-12-21", "voteCount": 40}
-  ]
-}

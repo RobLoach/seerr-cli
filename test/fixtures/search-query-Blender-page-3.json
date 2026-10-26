@@ -1,0 +1,9 @@
+{
+  "page": 3,
+  "totalPages": 5,
+  "totalResults": 15,
+  "results": [
+    {"id": 253777, "mediaType": "movie", "title": "Caminandes: Llama Drama", "releaseDate": "2013-02-10", "voteCount": 90},
+    {"id": 406956, "mediaType": "movie", "title": "Caminandes: Llamigos", "releaseDate": "2016-01-30", "voteCount": 80}
+  ]
+}

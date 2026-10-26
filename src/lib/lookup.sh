@@ -2,12 +2,12 @@
 ##
 ## A title is searched for. Results with exactly that title win over the first
 ## result, unless they are obscure: an exact match needs at least a tenth of
-## the votes of the first result or the top exact match, so "Matrix" still
-## finds The Matrix rather than a 1971 short. If more than one exact match is
-## left and a terminal is attached, you're asked which one you mean.
+## the votes of the first result or the top exact match, so a little-known
+## film called "Bunny" doesn't beat Big Buck Bunny. If more than one exact
+## match is left and a terminal is attached, you're asked which one you mean.
 ##
-## --year limits the results to one release year, and makes a number like
-## 1917 count as a title instead of an ID. Up to 3 pages of results are
+## --year limits the results to one release year, and makes a number count as
+## a title instead of an ID. Up to 3 pages of results are
 ## searched for a match.
 ##
 ## Sets seerr_tmdb_id, and seerr_tmdb_match to "Title (Year)" when it searched.

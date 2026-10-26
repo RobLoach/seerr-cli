@@ -1,0 +1,11 @@
+{
+  "page": 1,
+  "totalPages": 1,
+  "totalResults": 4,
+  "results": [
+    {"id": 9900010, "mediaType": "movie", "title": "Sintel: The Making Of", "releaseDate": "2010-10-05", "voteCount": 600},
+    {"id": 45745, "mediaType": "movie", "title": "Sintel", "releaseDate": "2010-09-30", "voteCount": 2000, "mediaInfo": {"status": 5}},
+    {"id": 9900011, "mediaType": "tv", "name": "Sintel Stories", "firstAirDate": "2024-02-01", "voteCount": 40},
+    {"id": 9900001, "mediaType": "movie", "title": "Sintel", "releaseDate": "2025-03-01", "voteCount": 300, "mediaInfo": {"status": 2}}
+  ]
+}

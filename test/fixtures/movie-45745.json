@@ -1,0 +1,11 @@
+{
+  "id": 45745,
+  "title": "Sintel",
+  "releaseDate": "2010-09-30",
+  "runtime": 14,
+  "genres": [{"name": "Animation"}, {"name": "Fantasy"}],
+  "voteAverage": 7.1,
+  "voteCount": 2000,
+  "overview": "A young woman searches for the baby dragon she raised.",
+  "mediaInfo": {"id": 7, "status": 5, "status4k": 3}
+}

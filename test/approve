@@ -15,7 +15,7 @@ unset SEERR_URL SEERR_API_KEY SEERR_CONFIG SEERR_TIMEOUT SEERR_HTTP_CLIENT XDG_C
 
 # Stands in for seerr_request: answers API requests from fixtures/ instead of
 # a Seerr server, and logs them for `sent`. The fixture is named after the
-# path, so GET /movie/603 reads fixtures/movie-603.json. Set fake_status and
+# path, so GET /movie/10378 reads fixtures/movie-10378.json. Set fake_status and
 # fake_body to answer with something else.
 # shellcheck disable=SC2034 # seerr reads the variables this sets
 fake_request() {
@@ -78,52 +78,52 @@ export SEERR_URL=https://seerr.example.com SEERR_API_KEY=test-key
 
 describe "title lookup"
   it "takes a number as a TMDB ID"
-    approve "seerr movie 603"
+    approve "seerr movie 10378"
 
   it "prefers an exact title to the first result"
-    approve "seerr movie Dune"
+    approve "seerr movie Sintel"
 
   it "keeps only results from --year"
-    approve "seerr movie Dune --year 1984"
+    approve "seerr movie Sintel --year 2025"
 
   it "skips an exact title that few people have voted on"
-    approve "seerr movie Matrix"
+    approve "seerr movie Bunny"
 
   it "searches for a number when --year is given"
-    approve "seerr movie 1917 --year 2019"
+    approve "seerr movie 1080 --year 2012"
 
   it "gives up after three pages of results"
-    approve "seerr movie Hamlet --year 1921"
+    approve "seerr movie Blender --year 1921"
     expect_exit_code 1
-    approve "sent" "sent_movie_hamlet_1921"
+    approve "sent" "sent_movie_blender_1921"
 
 describe "commands"
   it "searches"
-    approve "seerr search Dune"
+    approve "seerr search Sintel"
 
   it "shows a TV show and its seasons"
-    approve "seerr tv 1399"
+    approve "seerr tv 6560"
 
   it "lists requests with their titles"
     approve "seerr request list"
 
   it "requests a TV show"
-    approve "seerr request create tv 1399 --seasons 1,2 --4k"
+    approve "seerr request create tv 6560 --seasons 1 --4k"
     approve "sent" "sent_request_create"
 
   it "fails when Seerr creates no request"
-    approve "fake_status=202 fake_body='{\"message\": \"No seasons available to request\"}' seerr request create tv 79063" "request_create_no_seasons"
+    approve "fake_status=202 fake_body='{\"message\": \"No seasons available to request\"}' seerr request create tv 6560" "request_create_no_seasons"
     expect_exit_code 1
 
   it "approves a request"
     approve "seerr request approve 12"
 
   it "reports an issue"
-    approve "seerr issue create movie 603 'Audio is out of sync' --problem audio"
+    approve "seerr issue create movie 10378 'Audio is out of sync' --problem audio"
     approve "sent" "sent_issue_create"
 
   it "only reports issues for media in Seerr"
-    approve "seerr issue create movie 841 'No sound'"
+    approve "seerr issue create movie 9761 'No sound'"
     expect_exit_code 1
 
 describe "errors"

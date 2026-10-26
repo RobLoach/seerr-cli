@@ -1,2 +1,2 @@
-GET /tv/1399
-POST /request {"mediaType":"tv","mediaId":1399,"is4k":true,"seasons":[1,2]}
+GET /tv/6560
+POST /request {"mediaType":"tv","mediaId":6560,"is4k":true,"seasons":[1]}

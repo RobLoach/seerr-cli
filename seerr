@@ -89,8 +89,8 @@ seerr_usage() {
     echo
 
     printf "%s\n" "Examples:"
-    printf "  seerr search \"The Matrix\"\n"
-    printf "  seerr request create movie 603\n"
+    printf "  seerr search \"Big Buck Bunny\"\n"
+    printf "  seerr request create movie 10378\n"
     printf "  seerr request list --filter pending\n"
     printf "  seerr -u https://seerr.example.com -k API_KEY status\n"
     echo
@@ -137,8 +137,8 @@ seerr_search_usage() {
     echo
 
     printf "%s\n" "Examples:"
-    printf "  seerr search \"The Matrix\"\n"
-    printf "  seerr search \"Star Trek\" --page 2\n"
+    printf "  seerr search \"Big Buck Bunny\"\n"
+    printf "  seerr search Caminandes --page 2\n"
     echo
 
   fi
@@ -209,7 +209,7 @@ seerr_movie_usage() {
     echo
 
     printf "  %s\n" "--year, -y YEAR"
-    printf "    Only match titles released in this year. Also makes a number like 1917 count\n    as a title.\n"
+    printf "    Only match titles released in this year. Also makes a number count as a\n    title instead of a TMDB ID.\n"
     echo
 
     printf "  %s\n" "--help, -h"
@@ -223,9 +223,9 @@ seerr_movie_usage() {
     echo
 
     printf "%s\n" "Examples:"
-    printf "  seerr movie 603\n"
-    printf "  seerr movie \"The Matrix\"\n"
-    printf "  seerr movie Dune --year 1984\n"
+    printf "  seerr movie 10378\n"
+    printf "  seerr movie \"Big Buck Bunny\"\n"
+    printf "  seerr movie Sintel --year 2010\n"
     echo
 
   fi
@@ -252,7 +252,7 @@ seerr_tv_usage() {
     echo
 
     printf "  %s\n" "--year, -y YEAR"
-    printf "    Only match titles released in this year. Also makes a number like 1917 count\n    as a title.\n"
+    printf "    Only match titles released in this year. Also makes a number count as a\n    title instead of a TMDB ID.\n"
     echo
 
     printf "  %s\n" "--season, -s NUMBER"
@@ -270,8 +270,8 @@ seerr_tv_usage() {
     echo
 
     printf "%s\n" "Examples:"
-    printf "  seerr tv 1399\n"
-    printf "  seerr tv \"Game of Thrones\" --season 1\n"
+    printf "  seerr tv 6560\n"
+    printf "  seerr tv \"Sherlock Holmes\" --year 1954 --season 1\n"
     echo
 
   fi
@@ -485,7 +485,7 @@ seerr_request_create_usage() {
     echo
 
     printf "  %s\n" "--year, -y YEAR"
-    printf "    Only match titles released in this year. Also makes a number like 1917 count\n    as a title.\n"
+    printf "    Only match titles released in this year. Also makes a number count as a\n    title instead of a TMDB ID.\n"
     echo
 
     printf "  %s\n" "--seasons, -s LIST"
@@ -512,9 +512,9 @@ seerr_request_create_usage() {
     echo
 
     printf "%s\n" "Examples:"
-    printf "  seerr request create movie 603\n"
-    printf "  seerr request create movie \"The Matrix\" --4k\n"
-    printf "  seerr request create tv \"Game of Thrones\" --seasons 1,2\n"
+    printf "  seerr request create movie 10378\n"
+    printf "  seerr request create movie \"Big Buck Bunny\" --4k\n"
+    printf "  seerr request create tv 6560 --seasons 1\n"
     echo
 
   fi
@@ -749,7 +749,7 @@ seerr_issue_create_usage() {
     echo
 
     printf "  %s\n" "--year, -y YEAR"
-    printf "    Only match titles released in this year. Also makes a number like 1917 count\n    as a title.\n"
+    printf "    Only match titles released in this year. Also makes a number count as a\n    title instead of a TMDB ID.\n"
     echo
 
     printf "  %s\n" "--problem KIND"
@@ -787,8 +787,8 @@ seerr_issue_create_usage() {
     echo
 
     printf "%s\n" "Examples:"
-    printf "  seerr issue create movie \"The Matrix\" \"Audio is out of sync\" --problem audio\n"
-    printf "  seerr issue create tv \"Game of Thrones\" \"No subtitles\" --problem subtitles\n  --season 1 --episode 4\n"
+    printf "  seerr issue create movie \"Big Buck Bunny\" \"Audio is out of sync\" --problem\n  audio\n"
+    printf "  seerr issue create tv 6560 \"No subtitles\" --problem subtitles --season 1\n  --episode 4\n"
     echo
 
   fi

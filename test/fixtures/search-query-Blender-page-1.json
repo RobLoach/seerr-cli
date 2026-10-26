@@ -1,0 +1,9 @@
+{
+  "page": 1,
+  "totalPages": 5,
+  "totalResults": 15,
+  "results": [
+    {"id": 10378, "mediaType": "movie", "title": "Big Buck Bunny", "releaseDate": "2008-04-10", "voteCount": 1500},
+    {"id": 9761, "mediaType": "movie", "title": "Elephants Dream", "releaseDate": "2006-03-24", "voteCount": 400}
+  ]
+}

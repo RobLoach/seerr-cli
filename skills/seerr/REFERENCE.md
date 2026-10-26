@@ -66,7 +66,7 @@ No `mediaInfo` at all means Seerr has never seen the title: nobody has requested
 
 ```json
 {"page": 1, "totalPages": 65, "totalResults": 1294,
- "results": [{"mediaType": "movie", "id": 438631, "title": "Dune", "releaseDate": "2021-09-15",
+ "results": [{"mediaType": "movie", "id": 10378, "title": "Big Buck Bunny", "releaseDate": "2008-04-10",
               "mediaInfo": {"status": 5, "status4k": 1}}]}
 ```
 

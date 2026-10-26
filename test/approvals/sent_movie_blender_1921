@@ -1,0 +1,3 @@
+GET /search?query=Blender&page=1
+GET /search?query=Blender&page=2
+GET /search?query=Blender&page=3

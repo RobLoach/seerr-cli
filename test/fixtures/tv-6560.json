@@ -1,0 +1,17 @@
+{
+  "id": 6560,
+  "name": "Sherlock Holmes",
+  "firstAirDate": "1954-10-18",
+  "status": "Ended",
+  "networks": [{"name": "Syndication"}],
+  "genres": [{"name": "Mystery"}, {"name": "Crime"}],
+  "numberOfSeasons": 1,
+  "numberOfEpisodes": 39,
+  "voteAverage": 7.0,
+  "voteCount": 60,
+  "overview": "Sherlock Holmes and Dr. Watson solve cases in London.",
+  "seasons": [
+    {"seasonNumber": 1, "episodeCount": 39, "airDate": "1954-10-18", "name": "Season 1"}
+  ],
+  "mediaInfo": {"id": 9, "status": 3, "seasons": [{"seasonNumber": 1, "status": 3}]}
+}

@@ -1,0 +1,11 @@
+{
+  "id": 10378,
+  "title": "Big Buck Bunny",
+  "releaseDate": "2008-04-10",
+  "runtime": 8,
+  "genres": [{"name": "Animation"}, {"name": "Comedy"}, {"name": "Family"}],
+  "voteAverage": 6.4,
+  "voteCount": 1500,
+  "overview": "A giant rabbit gets even with three forest bullies.",
+  "mediaInfo": {"id": 5, "status": 5, "status4k": 1}
+}

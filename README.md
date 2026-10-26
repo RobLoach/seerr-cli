@@ -3,14 +3,14 @@
 [seerr-cli](https://github.com/robloach/seerr-cli) is a command-line client for [Seerr](https://docs.seerr.dev), the media request manager. Search for movies and TV shows, make and approve requests, and manage issues from your terminal.
 
 ```console
-$ seerr search "The Matrix"
-TYPE    ID     TITLE                     YEAR  STATUS
-movie   603    The Matrix                1999  available
-movie   604    The Matrix Reloaded       2003  -
-person  6384   Keanu Reeves              -     -
+$ seerr search Caminandes
+TYPE   ID      TITLE                     YEAR  STATUS
+movie  253777  Caminandes: Llama Drama   2013  available
+movie  253774  Caminandes: Gran Dillama  2013  -
+movie  406956  Caminandes: Llamigos      2016  -
 
-$ seerr request create movie "The Matrix Reloaded"
-Requested The Matrix Reloaded (2003) as request #12 (pending)
+$ seerr request create movie "Caminandes: Llamigos"
+Requested Caminandes: Llamigos (2016) as request #12 (pending)
 ```
 
 ## Requirements
@@ -104,23 +104,23 @@ Run `seerr --help`, or `seerr COMMAND --help` for any command, to see all option
 ### Search and browse
 
 ```bash
-seerr search "Star Trek"                # movies, TV shows, and people
-seerr search "Star Trek" --page 2
+seerr search Caminandes                 # movies, TV shows, and people
+seerr search Caminandes --page 2
 seerr trending --type tv --window week
-seerr movie "The Matrix"                # movie details
-seerr movie 603                         # the same movie, by TMDB ID
-seerr tv "Game of Thrones"              # show details and season availability
-seerr tv "Game of Thrones" --season 1   # episode list
-seerr movie Dune --year 1984            # pick a release year
+seerr movie "Big Buck Bunny"            # movie details
+seerr movie 10378                       # the same movie, by TMDB ID
+seerr tv 6560                           # show details and season availability
+seerr tv 6560 --season 1                # episode list
+seerr tv "Sherlock Holmes" --year 1954  # pick a release year
 ```
 
 `seerr movie`, `seerr tv`, `seerr request create`, and `seerr issue create` take either a TMDB ID or a title. For a title, `seerr` searches and picks a result:
 
-- A result with exactly the title you typed wins over the first result, so `Dune` finds *Dune*, not *Dune: Part Two*.
-- Little-known results are skipped: an exact match needs at least a tenth as many votes as the most popular result. `Matrix` still finds *The Matrix*, not an obscure film called *Matrix*.
-- If several popular results have exactly that title, such as the 1984 and 2021 versions of *Dune*, `seerr` lists them and asks which one you mean. It only asks in a terminal; in scripts and pipes it uses the first one.
+- A result with exactly the title you typed wins over the first result, so `Sintel` finds *Sintel*, even if a longer title such as *Sintel: The Making Of* comes first.
+- Little-known results are skipped: an exact match needs at least a tenth as many votes as the most popular result. If an obscure film were called *Bunny*, `Bunny` would still find *Big Buck Bunny*.
+- If several popular results have exactly that title, such as two films from different years, `seerr` lists them and asks which one you mean. It only asks in a terminal; in scripts and pipes it uses the first one.
 - `--year` keeps only results from that release year. `seerr` looks through the first three pages of search results for a match.
-- A number on its own is treated as a TMDB ID. To look up a movie named with a number, add `--year`: `seerr movie 1917 --year 2019`.
+- A number on its own is treated as a TMDB ID. To look up a movie whose title is a number, add `--year`, and `seerr` searches for it as a title.
 
 ### Requests
 
@@ -130,10 +130,10 @@ seerr request list --filter pending
 seerr request list --type tv --take 50 --page 2
 seerr request get 12
 
-seerr request create movie "The Matrix"
-seerr request create movie 603 --4k
-seerr request create tv "Game of Thrones"               # all seasons
-seerr request create tv "Game of Thrones" --seasons 1,2
+seerr request create movie "Big Buck Bunny"
+seerr request create movie 10378 --4k
+seerr request create tv 6560                # all seasons
+seerr request create tv 6560 --seasons 1
 
 seerr request approve 12
 seerr request decline 12
@@ -151,8 +151,8 @@ seerr media list --filter available
 seerr issue list                        # open issues
 seerr issue list --filter all
 seerr issue get 3                       # details and comments
-seerr issue create movie "The Matrix" "Audio is out of sync" --problem audio
-seerr issue create tv "Game of Thrones" "No subtitles" --problem subtitles --season 1 --episode 4
+seerr issue create movie "Big Buck Bunny" "Audio is out of sync" --problem audio
+seerr issue create tv 6560 "No subtitles" --problem subtitles --season 1 --episode 4
 seerr issue comment 3 "Replaced the file, should be fixed now"
 seerr issue resolve 3
 seerr issue reopen 3

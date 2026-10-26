@@ -1,0 +1,9 @@
+{
+  "page": 1,
+  "totalPages": 1,
+  "totalResults": 2,
+  "results": [
+    {"id": 10378, "mediaType": "movie", "title": "Big Buck Bunny", "releaseDate": "2008-04-10", "voteCount": 1500, "mediaInfo": {"status": 5}},
+    {"id": 9900002, "mediaType": "movie", "title": "Bunny", "releaseDate": "2001-06-01", "voteCount": 9}
+  ]
+}

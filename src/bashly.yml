@@ -42,8 +42,8 @@ flags:
     options: [files]
 
 examples:
-- seerr search "The Matrix"
-- seerr request create movie 603
+- seerr search "Big Buck Bunny"
+- seerr request create movie 10378
 - seerr request list --filter pending
 - seerr -u https://seerr.example.com -k API_KEY status
 
@@ -88,8 +88,8 @@ commands:
     arg: code
     help: Language for titles and overviews, e.g. en or fr
   examples:
-  - seerr search "The Matrix"
-  - seerr search "Star Trek" --page 2
+  - seerr search "Big Buck Bunny"
+  - seerr search Caminandes --page 2
 
 - name: trending
   help: Show trending movies and TV shows
@@ -126,12 +126,12 @@ commands:
     long: --year
     short: -y
     arg: year
-    help: Only match titles released in this year. Also makes a number like 1917 count as a title.
+    help: Only match titles released in this year. Also makes a number count as a title instead of a TMDB ID.
     validate: integer
   examples:
-  - seerr movie 603
-  - seerr movie "The Matrix"
-  - seerr movie Dune --year 1984
+  - seerr movie 10378
+  - seerr movie "Big Buck Bunny"
+  - seerr movie Sintel --year 2010
 
 - name: tv
   help: Show details for a TV show, or the episodes in one season
@@ -148,8 +148,8 @@ commands:
     help: Show the episode list for this season
     validate: integer
   examples:
-  - seerr tv 1399
-  - seerr tv "Game of Thrones" --season 1
+  - seerr tv 6560
+  - seerr tv "Sherlock Holmes" --year 1954 --season 1
 
 - name: media
   help: Browse media tracked by Seerr
@@ -246,9 +246,9 @@ commands:
     - long: --4k
       help: Request the 4K version
     examples:
-    - seerr request create movie 603
-    - seerr request create movie "The Matrix" --4k
-    - seerr request create tv "Game of Thrones" --seasons 1,2
+    - seerr request create movie 10378
+    - seerr request create movie "Big Buck Bunny" --4k
+    - seerr request create tv 6560 --seasons 1
 
   - name: approve
     help: Approve a pending request
@@ -337,8 +337,8 @@ commands:
       validate: positive_integer
       needs: [--season]
     examples:
-    - seerr issue create movie "The Matrix" "Audio is out of sync" --problem audio
-    - seerr issue create tv "Game of Thrones" "No subtitles" --problem subtitles --season 1 --episode 4
+    - seerr issue create movie "Big Buck Bunny" "Audio is out of sync" --problem audio
+    - seerr issue create tv 6560 "No subtitles" --problem subtitles --season 1 --episode 4
 
   - name: get
     help: Show an issue and its comments

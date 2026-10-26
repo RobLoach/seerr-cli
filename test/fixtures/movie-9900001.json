@@ -1,0 +1,11 @@
+{
+  "id": 9900001,
+  "title": "Sintel",
+  "releaseDate": "2025-03-01",
+  "runtime": 20,
+  "genres": [{"name": "Animation"}],
+  "voteAverage": 6.0,
+  "voteCount": 300,
+  "overview": "A fan-made retelling of the open movie.",
+  "mediaInfo": {"id": 8, "status": 2}
+}

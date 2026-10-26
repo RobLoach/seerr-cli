@@ -1,0 +1,9 @@
+{
+  "page": 1,
+  "totalPages": 1,
+  "totalResults": 2,
+  "results": [
+    {"id": 9900003, "mediaType": "movie", "title": "1080", "releaseDate": "2012-05-01", "voteCount": 50},
+    {"id": 9900004, "mediaType": "movie", "title": "1080", "releaseDate": "1970-01-01", "voteCount": 2}
+  ]
+}
