@@ -1240,9 +1240,7 @@ normalize_input() {
 }
 
 seerr_settings_resolve() {
-  local key var error
-
-  seerr_config_locate "${1:-}"
+  seerr_config_locate
   seerr_config_url=""
   seerr_config_api_key=""
   seerr_config_timeout=""
@@ -1251,15 +1249,8 @@ seerr_settings_resolve() {
     seerr_config_read "$seerr_config_file"
   fi
 
-  # Bashly checks flags and environment variables, but not the config file.
   if [[ ${1:-} != lenient ]]; then
-    for key in url timeout http_client; do
-      var=seerr_config_$key
-      error=$(seerr_config_validate "$key" "${!var}")
-      if [[ -n $error ]]; then
-        seerr_die "$key in $seerr_config_file: $error"
-      fi
-    done
+    seerr_config_check
   fi
 
   # The first value that isn't empty wins: flag, then environment, then file.
@@ -1270,6 +1261,22 @@ seerr_settings_resolve() {
 
   seerr_url=${seerr_url%/}
   seerr_url=${seerr_url%/api/v1}
+}
+
+seerr_config_check() {
+  local key var error
+
+  if [[ -n $seerr_config_file && ! -f $seerr_config_file ]]; then
+    seerr_die "config file not found: $seerr_config_file"
+  fi
+
+  for key in url timeout http_client; do
+    var=seerr_config_$key
+    error=$(seerr_config_validate "$key" "${!var}")
+    if [[ -n $error ]]; then
+      seerr_die "$key in $seerr_config_file: $error"
+    fi
+  done
 }
 
 seerr_config_validate() {
@@ -1285,15 +1292,11 @@ seerr_config_validate() {
 }
 
 seerr_config_locate() {
-  local mode=${1:-}
   local explicit=${args[--config]:-${SEERR_CONFIG:-}}
   local candidate
 
   seerr_config_file=""
   if [[ -n $explicit ]]; then
-    if [[ ! -f $explicit && $mode != lenient ]]; then
-      seerr_die "config file not found: $explicit"
-    fi
     seerr_config_file=$explicit
     return
   fi
@@ -1314,25 +1317,15 @@ seerr_config_candidates() {
 
 seerr_config_read() {
   local line key value
-  local double_quoted='^[[:space:]]*"([^"]*)"[[:space:]]*(#.*)?$'
-  local single_quoted="^[[:space:]]*'([^']*)'[[:space:]]*(#.*)?\$"
 
   [[ -r $1 ]] || seerr_die "cannot read config file: $1"
 
-  while IFS= read -r line || [[ -n $line ]]; do
-    if [[ ! $line =~ ^([a-z_]+)[[:space:]]*:(.*)$ ]]; then
-      continue
-    fi
-    key=${BASH_REMATCH[1]}
-    value=${BASH_REMATCH[2]}
-
-    if [[ $value =~ $double_quoted || $value =~ $single_quoted ]]; then
-      value=${BASH_REMATCH[1]}
-    else
-      value=${value%%[[:space:]]#*}
-      value=${value#"${value%%[![:space:]]*}"}
-      value=${value%"${value##*[![:space:]]}"}
-    fi
+  while IFS= read -r line; do
+    key=${line%%=*}
+    value=${line#*=}
+    value=${value#\"}
+    value=${value%\"}
+    value=${value%"${value##*[![:space:]]}"}
 
     case $key in
       url) seerr_config_url=$value ;;
@@ -1340,7 +1333,7 @@ seerr_config_read() {
       timeout) seerr_config_timeout=$value ;;
       http_client) seerr_config_http_client=$value ;;
     esac
-  done <"$1"
+  done < <(yaml_load "$1")
 }
 
 seerr_config_write() {
@@ -1725,6 +1718,27 @@ validate_url() {
   if [[ -n $1 && ! $1 =~ ^https?:// ]]; then
     echo "must start with http:// or https://, e.g. https://seerr.example.com"
   fi
+}
+
+yaml_load() {
+  local prefix=$2
+  local s='[[:space:]]*' w='[a-zA-Z0-9_]*'
+  local fs
+
+  fs=$(echo @ | tr @ '\034')
+
+  sed -ne "s|^\($s\):|\1|" \
+    -e "s|^\($s\)\($w\)$s:${s}[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+    -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p" "$1" |
+    awk -F"$fs" '{
+      indent = length($1)/2;
+      vname[indent] = $2;
+      for (i in vname) {if (i > indent) {delete vname[i]}}
+      if (length($3) > 0) {
+         vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+         printf("%s%s%s=\"%s\"\n", "'"$prefix"'",vn, $2, $3);
+      }
+    }'
 }
 
 seerr_search_command() {
@@ -2159,12 +2173,21 @@ seerr_config_show_command() {
     fi
   fi
 
+  timeout=$seerr_timeout
+  if [[ $timeout =~ ^[0-9]+$ ]]; then
+    timeout+=s
+  fi
+
   printf '%-13s %s\n' \
     "Config file:" "${seerr_config_file:-none found}" \
     "URL:" "${seerr_url:-not set}" \
     "API key:" "$api_key" \
-    "Timeout:" "${seerr_timeout}s" \
+    "Timeout:" "$timeout" \
     "HTTP client:" "$seerr_http_client"
+
+  # Other commands stop at a missing or bad config file without showing
+  # anything, so check it only after showing the settings.
+  seerr_config_check
 
 }
 
@@ -2193,9 +2216,8 @@ seerr_config_set_command() {
   if [[ -z $value ]]; then
     seerr_die "no value given for $key"
   fi
-  # No setting can contain a space, and in the config file " #" starts a comment.
-  if [[ $value == *[[:space:]]* ]]; then
-    seerr_die "$key cannot contain spaces or line breaks"
+  if [[ $value == *$'\n'* ]]; then
+    seerr_die "$key cannot contain a line break"
   fi
   error=$(seerr_config_validate "$key" "$value")
   if [[ -n $error ]]; then
@@ -7585,7 +7607,8 @@ before_hook() {
     # Completions don't talk to Seerr, so a broken config shouldn't stop them.
     completions) ;;
     # `config set` may create the config file, or fix a bad value in it.
-    "config set") seerr_settings_resolve lenient ;;
+    # `config show` shows the settings before saying what is wrong with them.
+    "config set" | "config show") seerr_settings_resolve lenient ;;
     *) seerr_settings_resolve ;;
   esac
 

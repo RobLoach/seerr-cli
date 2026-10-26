@@ -22,21 +22,14 @@ YAML
   it "prefers flags to environment variables"
     approve "SEERR_URL=https://env.example seerr -u https://flag.example config show"
 
-  it "fails when --config doesn't exist"
+  it "shows the settings, then fails, when --config doesn't exist"
     approve "seerr -c ~/missing.yaml config show"
     expect_exit_code 1
 
 describe "reading the config file"
-  it "leaves out a comment after a value"
+  it "takes a value out of quotes"
     write_config <<'YAML'
-url: https://comment.example  # home server
-timeout: 45 # seconds
-YAML
-    approve "seerr config show" "config_read_comment"
-
-  it "takes a value out of quotes, before a comment"
-    write_config <<'YAML'
-url: "https://quoted.example/#top" # comment
+url: "https://quoted.example"
 http_client: 'wget'
 YAML
     approve "seerr config show" "config_read_quotes"
@@ -44,10 +37,6 @@ YAML
   it "keeps a # that has no space before it"
     write_config <<<'url: https://hash.example/#top'
     approve "seerr config show" "config_read_hash"
-
-  it "treats a value that is only a comment as not set"
-    write_config <<<'url: # fill in later'
-    approve "seerr config show" "config_read_only_comment"
 
   it "reads Windows line endings"
     printf 'url: https://crlf.example\r\ntimeout: 9\r\n' | write_config
@@ -57,9 +46,11 @@ YAML
     printf -- '---\n  url: https://indented.example\nurl_old: https://old.example\nurl: https://top.example' | write_config
     approve "seerr config show" "config_read_ignored"
 
-  it "fails on a bad value, and names the file"
+  it "shows the settings, then fails, when a value is bad"
     write_config <<<'timeout: soon'
-    approve "seerr config show" "config_read_bad_value"
+    approve "seerr config show" "config_show_bad_value"
+    expect_exit_code 1
+    approve "seerr status" "config_bad_value_other_command"
     expect_exit_code 1
 
 describe "config set"
@@ -95,7 +86,7 @@ YAML
     expect_exit_code 1
     approve "seerr config set timeout 0"
     expect_exit_code 1
-    approve "seerr config set api_key 'abcd #1234'"
+    approve "seerr config set api_key \$'abcd\n1234'"
     expect_exit_code 1
     approve "seerr config set api_key </dev/null"
     expect_exit_code 1

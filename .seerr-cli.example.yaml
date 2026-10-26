@@ -12,7 +12,8 @@
 #   seerr config set api_key
 #
 # Environment variables (SEERR_URL, SEERR_API_KEY, SEERR_TIMEOUT, and
-# SEERR_HTTP_CLIENT) override this file.
+# SEERR_HTTP_CLIENT) override this file. Keep comments on their own lines; a
+# comment after a value becomes part of the value.
 
 # Seerr server URL.
 url: https://seerr.example.com

@@ -1,5 +1,6 @@
 Config file:  ~/.config/seerr/seerr-cli.yaml
 URL:          not set
 API key:      not set
-Timeout:      30s
+Timeout:      soon
 HTTP client:  curl
+seerr: timeout in ~/.config/seerr/seerr-cli.yaml: must be a whole number greater than 0
