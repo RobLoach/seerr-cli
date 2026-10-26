@@ -7615,7 +7615,7 @@ before_hook() {
 }
 
 initialize() {
-  declare -g version="0.1.0"
+  declare -g version="0.2.0"
   set -e
 
 }

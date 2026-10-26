@@ -77,8 +77,8 @@ TV results use `name` and `firstAirDate` instead of `title` and `releaseDate`. P
 ```json
 {"pageInfo": {"page": 1, "pages": 6, "pageSize": 20, "results": 112},
  "results": [{"id": 6, "status": 2, "type": "movie", "is4k": false, "createdAt": "2026-10-21T18:07:54.000Z",
-              "media": {"id": 806, "mediaType": "movie", "tmdbId": 1400837, "status": 3, "status4k": 1},
-              "requestedBy": {"id": 1, "displayName": "Rob"}}]}
+              "media": {"id": 806, "mediaType": "movie", "tmdbId": 10378, "status": 3, "status4k": 1},
+              "requestedBy": {"id": 1, "displayName": "alice"}}]}
 ```
 
 Requests and issues don't include the title. Get it with `seerr movie TMDB_ID --json | jq -r .title`, or `.name` for TV. Or read the table output, which looks titles up for you.
@@ -90,4 +90,6 @@ Requests and issues don't include the title. Get it with `seerr movie TMDB_ID --
 - Exit status is 0 on success and 1 on any failure. The message is on stderr and starts with `seerr:`.
 - HTTP 401 or 403 means the API key is wrong or lacks permission. Tell the user; don't try to fix the key.
 - "did not answer with JSON" means the URL points at something other than Seerr, such as a proxy login page.
+- "no request created" means Seerr accepted the call but made no request. For TV, "No seasons available to request" means every season asked for is already requested or available, or the show only has specials. Tell the user rather than retrying.
+- `config show` prints the settings even when the config file is missing or has a bad value, then exits 1 with the problem on the last line. Other commands stop at the problem without printing anything else.
 - Requests time out after 30 seconds. The user can raise this with `SEERR_TIMEOUT` or `seerr config set timeout SECONDS`.

@@ -1,6 +1,6 @@
 name: seerr
 help: Command-line client for the Seerr media request manager
-version: 0.1.0
+version: 0.2.0
 
 dependencies:
   http_client:

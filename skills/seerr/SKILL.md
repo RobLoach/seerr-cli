@@ -16,7 +16,7 @@ allowed-tools: Bash(seerr status:*) Bash(seerr whoami:*) Bash(seerr search:*) Ba
 ## Before you start
 
 1. Run `command -v seerr`. If it prints nothing, follow [Install seerr](#install-seerr) below.
-2. Run `seerr config show`. If the URL or API key says "not set", ask the user to run `seerr config set url URL` and `seerr config set api_key` themselves. Never ask for, print, or read the API key or the config file.
+2. Run `seerr config show`. If the URL or API key says "not set", ask the user to run `seerr config set url URL` and `seerr config set api_key` themselves. If it ends with an error about the config file, tell the user what it says. Never ask for, print, or read the API key or the config file.
 3. Run `seerr status` to check that the server answers.
 
 ## Rules
@@ -36,7 +36,7 @@ allowed-tools: Bash(seerr status:*) Bash(seerr whoami:*) Bash(seerr search:*) Ba
 2. If more than one result could be what the user means, list them with years and ask.
 3. Check `status`. 5 means it's already available, and 2 or 3 means it's already requested, so tell the user instead of requesting again. 4 means partly available, which is common for TV.
 4. For TV, ask which seasons if the user didn't say. `seerr tv ID` shows each season's status.
-5. After the user confirms, run `seerr request create movie ID`, or `seerr request create tv ID --seasons 1,2`. Leaving out `--seasons` requests every season. Add `--4k` only if asked.
+5. After the user confirms, run `seerr request create movie ID`, or `seerr request create tv ID --seasons 1,2`. Leaving out `--seasons` requests every season except specials (season 0). Seerr skips seasons that are already requested or available, and if none are left, the command fails with "no request created: No seasons available to request". Add `--4k` only if asked.
 
 ### Check on something
 
