@@ -1,0 +1,36 @@
+name: Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+
+      - name: Install Bashly
+        run: gem install bashly --version 2.0.0
+
+      - name: Check that seerr is generated from src/
+        run: |
+          bashly generate
+          git diff --exit-code || {
+            echo "::error::seerr is out of date. Run bashly generate and commit the result."
+            exit 1
+          }
+
+      - name: ShellCheck
+        run: shellcheck seerr test/approve
+
+      - name: Test
+        run: test/approve

@@ -30,4 +30,5 @@ body=$(jq -cn \
     problemEpisode: $episode
   }')
 json=$(seerr_api POST /issue "$body")
+seerr_require_id "$json" issue
 seerr_report "$json" "Created issue #$(jq -r .id <<<"$json") for $title"

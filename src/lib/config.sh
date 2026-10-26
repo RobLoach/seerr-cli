@@ -10,11 +10,11 @@
 ##
 ## Usage: seerr_settings_resolve [lenient]
 ##   lenient is for `config set`, which may create the config file or fix a
-##   bad value in it, so neither a missing file nor a bad value stops it.
+##   bad value in it, and `config show`, which shows the settings before
+##   saying what is wrong with them. Neither a missing file nor a bad value
+##   stops them.
 seerr_settings_resolve() {
-  local key var error
-
-  seerr_config_locate "${1:-}"
+  seerr_config_locate
   seerr_config_url=""
   seerr_config_api_key=""
   seerr_config_timeout=""
@@ -23,15 +23,8 @@ seerr_settings_resolve() {
     seerr_config_read "$seerr_config_file"
   fi
 
-  # Bashly checks flags and environment variables, but not the config file.
   if [[ ${1:-} != lenient ]]; then
-    for key in url timeout http_client; do
-      var=seerr_config_$key
-      error=$(seerr_config_validate "$key" "${!var}")
-      if [[ -n $error ]]; then
-        seerr_die "$key in $seerr_config_file: $error"
-      fi
-    done
+    seerr_config_check
   fi
 
   # The first value that isn't empty wins: flag, then environment, then file.
@@ -42,6 +35,25 @@ seerr_settings_resolve() {
 
   seerr_url=${seerr_url%/}
   seerr_url=${seerr_url%/api/v1}
+}
+
+## Exit with an error when a --config or SEERR_CONFIG file doesn't exist, or
+## the config file has a bad value. Bashly checks flags and environment
+## variables, but not the config file.
+seerr_config_check() {
+  local key var error
+
+  if [[ -n $seerr_config_file && ! -f $seerr_config_file ]]; then
+    seerr_die "config file not found: $seerr_config_file"
+  fi
+
+  for key in url timeout http_client; do
+    var=seerr_config_$key
+    error=$(seerr_config_validate "$key" "${!var}")
+    if [[ -n $error ]]; then
+      seerr_die "$key in $seerr_config_file: $error"
+    fi
+  done
 }
 
 ## Print why VALUE isn't valid for config KEY, or nothing when it is. An empty
@@ -60,19 +72,14 @@ seerr_config_validate() {
 }
 
 ## Find the config file and store its path in seerr_config_file, or leave it
-## empty when there is none. A --config or SEERR_CONFIG path must exist
-## unless MODE is lenient; the default locations are optional.
-## Usage: seerr_config_locate [lenient]
+## empty when there is none. A --config or SEERR_CONFIG path is used even
+## when it doesn't exist; seerr_config_check reports that.
 seerr_config_locate() {
-  local mode=${1:-}
   local explicit=${args[--config]:-${SEERR_CONFIG:-}}
   local candidate
 
   seerr_config_file=""
   if [[ -n $explicit ]]; then
-    if [[ ! -f $explicit && $mode != lenient ]]; then
-      seerr_die "config file not found: $explicit"
-    fi
     seerr_config_file=$explicit
     return
   fi

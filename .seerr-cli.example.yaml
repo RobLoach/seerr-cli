@@ -16,7 +16,7 @@
 # comment after a value becomes part of the value.
 
 # Seerr server URL.
-url: https://seerr.example.com
+url: http://127.0.0.1:5055
 
 # API Key, from Settings > General in the Seerr web UI.
 api_key: YOUR_API_KEY

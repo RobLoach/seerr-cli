@@ -1,0 +1,5 @@
+Config file:  ~/.config/seerr/seerr-cli.yaml
+URL:          https://seerr.example.com
+API key:      abcd...efgh
+Timeout:      30s
+HTTP client:  curl

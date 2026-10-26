@@ -1,0 +1,2 @@
+seerr: HTTP 403: Forbidden
+Check that your API key is correct (seerr config show).

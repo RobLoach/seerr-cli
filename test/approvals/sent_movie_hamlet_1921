@@ -1,0 +1,3 @@
+GET /search?query=Hamlet&page=1
+GET /search?query=Hamlet&page=2
+GET /search?query=Hamlet&page=3

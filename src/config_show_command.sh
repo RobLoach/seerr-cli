@@ -1,8 +1,3 @@
-url="not set"
-if [[ -n $seerr_url ]]; then
-  url="$seerr_url"
-fi
-
 api_key="not set"
 if [[ -n $seerr_api_key ]]; then
   api_key="****"
@@ -11,9 +6,18 @@ if [[ -n $seerr_api_key ]]; then
   fi
 fi
 
+timeout=$seerr_timeout
+if [[ $timeout =~ ^[0-9]+$ ]]; then
+  timeout+=s
+fi
+
 printf '%-13s %s\n' \
   "Config file:" "${seerr_config_file:-none found}" \
-  "URL:" "$url" \
+  "URL:" "${seerr_url:-not set}" \
   "API key:" "$api_key" \
-  "Timeout:" "${seerr_timeout}s" \
+  "Timeout:" "$timeout" \
   "HTTP client:" "$seerr_http_client"
+
+# Other commands stop at a missing or bad config file without showing
+# anything, so check it only after showing the settings.
+seerr_config_check

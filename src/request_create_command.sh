@@ -21,6 +21,11 @@ body=$(jq -cn --arg type "$type" --argjson id "$seerr_tmdb_id" --argjson is4k "$
       {seasons: (if $seasons == "all" then "all" else ($seasons | split(",") | map(tonumber)) end)}
     else {} end')
 json=$(seerr_api POST /request "$body")
+hint=""
+if [[ $type == tv ]]; then
+  hint="Seerr leaves out seasons that are already requested or available, and --seasons all leaves out specials (season 0)."
+fi
+seerr_require_id "$json" request "$hint"
 status=$(jq -r "$(seerr_jq_defs) .status | request_status" <<<"$json")
 title=${seerr_tmdb_match:-$(seerr_media_label "$json")}
 seerr_report "$json" "Requested $title as request #$(jq -r .id <<<"$json") ($status)"

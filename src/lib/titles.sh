@@ -1,7 +1,8 @@
 ## Look up the title of every movie and TV show referenced in a response.
 ## Request, media, and issue responses only carry TMDB IDs, so this makes one
 ## extra API call per unique title, 8 at a time. Prints a JSON object such as
-## {"movie:603": "The Matrix"} for jq's media_title($titles). Makes no calls
+## {"movie:603": "The Matrix (1999)"} for jq's media_title($titles). The year
+## tells apart titles such as the 1984 and 2021 Dune. Makes no calls
 ## and prints {} when --json is set.
 ## Usage: seerr_titles_map JSON MEDIA_FILTER
 ##   MEDIA_FILTER selects the media objects, e.g. '.results[].media'
@@ -36,12 +37,12 @@ seerr_titles_map() {
   trap - EXIT
 }
 
-## Print {"key": KEY, "title": TITLE} for a key like "movie:603", or nothing
-## when the title can't be fetched.
+## Print {"key": KEY, "title": "TITLE (YEAR)"} for a key like "movie:603", or
+## nothing when the title can't be fetched.
 seerr_title_fetch() {
   seerr_request GET "/${1%%:*}/${1#*:}"
   if [[ $seerr_status == 2?? ]]; then
-    jq -c --arg key "$1" '{key: $key, title: (.title // .name)}' <<<"$seerr_body" 2>/dev/null || true
+    jq -c --arg key "$1" "$(seerr_jq_defs) select(.title // .name) | {key: \$key, title: title_year}" <<<"$seerr_body" 2>/dev/null || true
   fi
 }
 

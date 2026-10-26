@@ -1,0 +1,9 @@
+{
+  "page": 2,
+  "totalPages": 5,
+  "totalResults": 15,
+  "results": [
+    {"id": 23383, "mediaType": "movie", "title": "Hamlet", "releaseDate": "1948-05-04", "voteCount": 300},
+    {"id": 52000, "mediaType": "movie", "title": "Hamlet", "releaseDate": "2009-12-26", "voteCount": 60}
+  ]
+}

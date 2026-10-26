@@ -1,0 +1,19 @@
+{
+  "id": 1399,
+  "name": "Game of Thrones",
+  "firstAirDate": "2011-04-17",
+  "status": "Ended",
+  "networks": [{"name": "HBO"}],
+  "genres": [{"name": "Drama"}, {"name": "Fantasy"}],
+  "numberOfSeasons": 2,
+  "numberOfEpisodes": 20,
+  "voteAverage": 8.5,
+  "voteCount": 24000,
+  "overview": "Noble families fight for control of the Iron Throne.",
+  "seasons": [
+    {"seasonNumber": 0, "episodeCount": 3, "airDate": "2010-12-05", "name": "Specials"},
+    {"seasonNumber": 1, "episodeCount": 10, "airDate": "2011-04-17", "name": "Season 1"},
+    {"seasonNumber": 2, "episodeCount": 10, "airDate": "2012-04-01", "name": "Season 2"}
+  ],
+  "mediaInfo": {"id": 9, "status": 4, "seasons": [{"seasonNumber": 1, "status": 5}, {"seasonNumber": 2, "status": 3}]}
+}
