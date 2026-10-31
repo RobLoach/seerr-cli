@@ -24,7 +24,7 @@ seerr_tmdb_resolve() {
           id,
           label: (title_year | one_line),
           votes: (.voteCount // 0),
-          exact: ((.title // .name | ascii_downcase) == ($query | ascii_downcase))
+          exact: (((.title // .name // "") | ascii_downcase) == ($query | ascii_downcase))
         }]
     | . as $all
     | [$all[] | select(.exact)] as $exact

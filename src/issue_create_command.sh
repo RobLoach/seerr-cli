@@ -2,7 +2,7 @@ type=${args[type]}
 season=${args[--season]:-0}
 episode=${args[--episode]:-0}
 
-if [[ $type == movie && -n ${args[--season]:-} ]]; then
+if [[ $type == movie && (-n ${args[--season]:-} || -n ${args[--episode]:-}) ]]; then
   seerr_die "--season and --episode only apply to TV issues"
 fi
 
