@@ -1245,7 +1245,7 @@ seerr_settings_resolve() {
   seerr_config_api_key=""
   seerr_config_timeout=""
   seerr_config_http_client=""
-  if [[ -f $seerr_config_file ]]; then
+  if [[ -f $seerr_config_file ]] && { [[ -r $seerr_config_file ]] || [[ ${1:-} != lenient ]]; }; then
     seerr_config_read "$seerr_config_file"
   fi
 
@@ -1268,6 +1268,9 @@ seerr_config_check() {
 
   if [[ -n $seerr_config_file && ! -f $seerr_config_file ]]; then
     seerr_die "config file not found: $seerr_config_file"
+  fi
+  if [[ -n $seerr_config_file && -f $seerr_config_file && ! -r $seerr_config_file ]]; then
+    seerr_die "cannot read config file: $seerr_config_file"
   fi
 
   for key in url timeout http_client; do
@@ -1513,7 +1516,7 @@ seerr_tmdb_resolve() {
           id,
           label: (title_year | one_line),
           votes: (.voteCount // 0),
-          exact: ((.title // .name | ascii_downcase) == ($query | ascii_downcase))
+          exact: (((.title // .name // "") | ascii_downcase) == ($query | ascii_downcase))
         }]
     | . as $all
     | [$all[] | select(.exact)] as $exact
@@ -1645,7 +1648,7 @@ seerr_titles_map() {
   local -a keys=()
 
   if [[ -z ${args[--json]:-} ]]; then
-    mapfile -t keys < <(jq -r "[$filter | select(.mediaType == \"movie\" or .mediaType == \"tv\") | \"\(.mediaType):\(.tmdbId)\"] | unique[]" <<<"$json")
+    mapfile -t keys < <(jq -r "[$filter | select((.mediaType == \"movie\" or .mediaType == \"tv\") and .tmdbId != null) | \"\(.mediaType):\(.tmdbId)\"] | unique[]" <<<"$json")
   fi
   if ((${#keys[@]} == 0)); then
     echo '{}'
@@ -2005,7 +2008,7 @@ seerr_issue_create_command() {
   season=${args[--season]:-0}
   episode=${args[--episode]:-0}
 
-  if [[ $type == movie && -n ${args[--season]:-} ]]; then
+  if [[ $type == movie && (-n ${args[--season]:-} || -n ${args[--episode]:-}) ]]; then
     seerr_die "--season and --episode only apply to TV issues"
   fi
 

@@ -12,7 +12,7 @@ seerr_titles_map() {
   local -a keys=()
 
   if [[ -z ${args[--json]:-} ]]; then
-    mapfile -t keys < <(jq -r "[$filter | select(.mediaType == \"movie\" or .mediaType == \"tv\") | \"\(.mediaType):\(.tmdbId)\"] | unique[]" <<<"$json")
+    mapfile -t keys < <(jq -r "[$filter | select((.mediaType == \"movie\" or .mediaType == \"tv\") and .tmdbId != null) | \"\(.mediaType):\(.tmdbId)\"] | unique[]" <<<"$json")
   fi
   if ((${#keys[@]} == 0)); then
     echo '{}'

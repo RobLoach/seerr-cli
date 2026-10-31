@@ -19,7 +19,7 @@ seerr_settings_resolve() {
   seerr_config_api_key=""
   seerr_config_timeout=""
   seerr_config_http_client=""
-  if [[ -f $seerr_config_file ]]; then
+  if [[ -f $seerr_config_file ]] && { [[ -r $seerr_config_file ]] || [[ ${1:-} != lenient ]]; }; then
     seerr_config_read "$seerr_config_file"
   fi
 
@@ -45,6 +45,9 @@ seerr_config_check() {
 
   if [[ -n $seerr_config_file && ! -f $seerr_config_file ]]; then
     seerr_die "config file not found: $seerr_config_file"
+  fi
+  if [[ -n $seerr_config_file && -f $seerr_config_file && ! -r $seerr_config_file ]]; then
+    seerr_die "cannot read config file: $seerr_config_file"
   fi
 
   for key in url timeout http_client; do
