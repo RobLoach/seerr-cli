@@ -1,6 +1,6 @@
 # seerr-cli
 
-[seerr-cli](https://github.com/robloach/seerr-cli) is a command-line client for [Seerr](https://docs.seerr.dev), the media request manager. Search for movies and TV shows, make and approve requests, and manage issues from your terminal.
+[seerr-cli](https://github.com/robloach/seerr-cli) is a command-line client for [Seerr](https://docs.seerr.dev), the media request manager. Search for movies and TV shows, and make requests directly from your terminal.
 
 ```console
 $ seerr search Caminandes
@@ -28,17 +28,11 @@ curl -fsSL --create-dirs -o ~/.local/bin/seerr https://raw.githubusercontent.com
 chmod +x ~/.local/bin/seerr
 ```
 
-Or clone the repository, which also gets you the [AI agent skill](#ai-agents):
+Or by cloning the repository:
 
 ```bash
 git clone https://github.com/robloach/seerr-cli.git
 install -m 755 seerr-cli/seerr ~/.local/bin/seerr
-```
-
-Or use your AI Agent to install it:
-
-```md
-Install seerr-cli and its Agent Skill by following the README at https://github.com/robloach/seerr-cli
 ```
 
 ## Configuration
@@ -46,13 +40,13 @@ Install seerr-cli and its Agent Skill by following the README at https://github.
 Create a `seerr-cli.yaml` configuration file in `~/.config/seerr-cli.yaml`, following the example in [`.seerr-cli.example.yaml`](.seerr-cli.example.yaml):
 
 ```yaml
-url: https://seerr.example.com
+url: http://[address]:5055
 api_key: YOUR_API_KEY
 ```
 
 Alternatively, you can set it by using seerr yourself:
 ```bash
-seerr config set url https://seerr.example.com
+seerr config set url http://[address]:5055
 seerr config set api_key
 ```
 
@@ -62,11 +56,9 @@ The configuration can be found in the following paths:
 2. `~/.config/seerr-cli.yaml`
 3. `~/.seerr-cli.yaml`
 
-When `XDG_CONFIG_HOME` is set, it replaces `~/.config` in the first two paths.
+`XDG_CONFIG_HOME` is also considered above.
 
 ### Environment Variables
-
-These can be set with environment variables, or command-line parameters:
 
 | Setting | Flag | Environment variable | Config key |
 |---|---|---|---|
@@ -79,12 +71,12 @@ These can be set with environment variables, or command-line parameters:
 The `--url`, `--api-key`, and `--config` flags go before the command:
 
 ```bash
-seerr -u https://seerr.example.com -k YOUR_API_KEY status
+seerr -u http://seerr:5055 -k YOUR_API_KEY status
 ```
 
 ### Verification
 
-Verify the settings with `seerr config show`:
+Verify configuration with `seerr config show`:
 
 ```console
 $ seerr config show
@@ -160,7 +152,7 @@ seerr status                            # server version and update status
 
 ### Other endpoints
 
-The [Seerr API](https://docs.seerr.dev/api/seerr-api/) has far more endpoints than these commands cover. `seerr api` sends a request to any of them and prints the JSON response:
+The [Seerr API](https://docs.seerr.dev/api/seerr-api/) has more endpoints. `seerr api` allows querying them and responding with JSON:
 
 ```bash
 seerr api GET /settings/about
@@ -171,32 +163,23 @@ seerr api PUT /user/2 --data @user.json
 echo '{"username": "alice"}' | seerr api PUT /user/2 --data -
 ```
 
-Paths target `/api/v1`.
-
 ### JSON
 
-Commands print aligned tables. Add `--json` (or `-j`) to get the API response as JSON instead, for use with `jq`:
+Commands print aligned tables. Add `--json` (or `-j`) to get JSON, for use with `jq`:
 
 ```bash
-# Approve every pending movie request. --take 1000 gets them all,
-# not just the first page of 20.
-seerr request list --filter pending --type movie --take 1000 --json \
+# Approve every pending movie request.
+seerr request list --filter pending --type movie --json \
   | jq -r '.results[].id' \
   | xargs -n1 seerr request approve
 ```
 
-The API returns only TMDB IDs for requests, media, and issues. To show titles, these tables make one extra API call per title, 8 at a time, so large lists take longer. `--json` skips those calls.
-
-Errors go to stderr, and `seerr` exits with status 1 on any failure: bad arguments, a server that can't be reached, an HTTP error response, or a response that isn't JSON (for example, a proxy's login page).
-
-Requests time out after 30 seconds. Change that with `SEERR_TIMEOUT` or `seerr config set timeout SECONDS`. With curl, that limit covers the whole request. With wget, it applies to each wait for the server, such as connecting or the next part of the response, so a slow response can take longer. A request that fails is never retried, so a slow server can't cause a request to be created twice.
-
 ## AI agents
 
-[`skills/seerr`](skills/seerr/SKILL.md) is an [Agent Skill](https://agentskills.io) that teaches AI agents how to use `seerr`: how to find a title and its ID, what the status codes mean, and how to request, approve, and report problems. It tells agents to ask you before changing anything on your server, and never to read your API key.
+[`skills/seerr`](skills/seerr/SKILL.md) is an [Agent Skill](https://agentskills.io) that teaches AI agents how to use `seerr`.
 
 ```
-Install the SKILL in this repository: https://github.com/robloach/seerr-cli
+Install the Agent SKILL in this repository: https://github.com/robloach/seerr-cli
 ```
 
 ### Tab completion (Optional)
