@@ -68,9 +68,17 @@ commands:
   group: Browse
   args:
   - name: query
-    required: true
-    help: Search terms
+    help: Search terms. Leave out when using --imdb or --tvdb.
   flags:
+  - long: --imdb
+    short: -i
+    arg: id
+    help: Find the title with this IMDb ID or imdb.com URL
+    conflicts: [--tvdb]
+  - long: --tvdb
+    arg: id
+    help: Find the TV show with this TVDB ID
+    validate: positive_integer
   - &json
     long: --json
     short: -j
@@ -90,6 +98,8 @@ commands:
   examples:
   - seerr search "Big Buck Bunny"
   - seerr search Caminandes --page 2
+  - seerr search --imdb tt1727587
+  - seerr search --tvdb 81189
 
 - name: trending
   help: Show trending movies and TV shows
@@ -118,7 +128,7 @@ commands:
   - &title_or_id
     name: title_or_id
     required: true
-    help: TMDB ID, or a title to search for. Uses the first match, or asks which one when several have that exact title.
+    help: TMDB ID, IMDb ID or imdb.com URL, or a title to search for. Uses the first match, or asks which one when several have that exact title.
   flags:
   - *json
   - *language
@@ -132,6 +142,7 @@ commands:
   - seerr movie 10378
   - seerr movie "Big Buck Bunny"
   - seerr movie Sintel --year 2010
+  - seerr movie https://www.imdb.com/title/tt1727587/
 
 - name: tv
   help: Show details for a TV show, or the episodes in one season

@@ -97,9 +97,40 @@ describe "title lookup"
     expect_exit_code 1
     approve "sent" "sent_movie_blender_1921"
 
+  it "looks up an IMDb ID"
+    approve "seerr movie tt1727587"
+
+  it "looks up an imdb.com URL, keeping the result of the right type"
+    approve "seerr request create tv https://www.imdb.com/title/tt0046643/?ref_=fn_al_tt_1"
+    approve "sent" "sent_request_create_imdb"
+
+  it "fails when the IMDb ID is not that type"
+    approve "seerr movie tt0046643"
+    expect_exit_code 1
+
+  it "fails when the IMDb ID matches nothing"
+    approve "seerr movie tt0000000"
+    expect_exit_code 1
+
 describe "commands"
   it "searches"
     approve "seerr search Sintel"
+
+  it "searches by IMDb or TVDB ID"
+    approve "seerr search --imdb https://m.imdb.com/title/tt1727587/"
+    approve "seerr search --tvdb 78855"
+
+  it "fails when a searched ID matches nothing"
+    approve "seerr search --imdb tt0000000"
+    expect_exit_code 1
+
+  it "needs search terms or an ID, not both"
+    approve "seerr search"
+    expect_exit_code 1
+    approve "seerr search Sintel --tvdb 78855"
+    expect_exit_code 1
+    approve "seerr search --imdb 1727587"
+    expect_exit_code 1
 
   it "shows a TV show and its seasons"
     approve "seerr tv 6560"

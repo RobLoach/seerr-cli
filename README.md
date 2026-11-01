@@ -96,15 +96,18 @@ Run `seerr --help`, or `seerr COMMAND --help` for any command, to see all option
 ```bash
 seerr search Caminandes                 # movies, TV shows, and people
 seerr search Caminandes --page 2
+seerr search --imdb tt1727587           # by IMDb ID or imdb.com URL
+seerr search --tvdb 81189               # by TVDB ID
 seerr trending --type tv --window week
 seerr movie "Big Buck Bunny"            # movie details
 seerr movie 10378                       # the same movie, by TMDB ID
+seerr movie https://www.imdb.com/title/tt1727587/  # by IMDb URL
 seerr tv 6560                           # show details and season availability
 seerr tv 6560 --season 1                # episode list
 seerr tv "Sherlock Holmes" --year 1954  # pick a release year
 ```
 
-`seerr movie`, `seerr tv`, `seerr request create`, and `seerr issue create` take either a TMDB ID or a title. For a title, `seerr` searches and picks a result:
+`seerr movie`, `seerr tv`, `seerr request create`, and `seerr issue create` take a TMDB ID, an IMDb ID such as `tt1727587` or an imdb.com URL, or a title. An IMDb ID is looked up with Seerr's search, and fails if it doesn't match a title of that type. For a title, `seerr` searches and picks a result:
 
 - A result with exactly the title you typed wins over the first result, so `Sintel` finds *Sintel*, even if a longer title such as *Sintel: The Making Of* comes first.
 - Little-known results are skipped: an exact match needs at least a tenth as many votes as the most popular result. If an obscure film were called *Bunny*, `Bunny` would still find *Big Buck Bunny*.

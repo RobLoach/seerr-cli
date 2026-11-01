@@ -1,0 +1,8 @@
+{
+  "page": 1,
+  "totalPages": 1,
+  "totalResults": 1,
+  "results": [
+    {"id": 45745, "mediaType": "movie", "title": "Sintel", "releaseDate": "2010-09-30", "voteCount": 2000, "mediaInfo": {"status": 5}}
+  ]
+}
