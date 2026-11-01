@@ -145,6 +145,11 @@ describe "commands"
   it "fails when Seerr creates no request"
     approve "fake_status=202 fake_body='{\"message\": \"No seasons available to request\"}' seerr request create tv 6560" "request_create_no_seasons"
     expect_exit_code 1
+    approve "sent" "sent_request_create_all_seasons"
+
+  it "fails when the response has no request ID"
+    approve "fake_status=201 fake_body='{\"id\": null, \"status\": 2}' seerr request create movie 10378" "request_create_null_id"
+    expect_exit_code 1
 
   it "approves a request"
     approve "seerr request approve 12"

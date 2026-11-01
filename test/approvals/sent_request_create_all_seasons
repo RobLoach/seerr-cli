@@ -1,0 +1,1 @@
+POST /request {"mediaType":"tv","mediaId":6560,"is4k":false,"seasons":"all"}
