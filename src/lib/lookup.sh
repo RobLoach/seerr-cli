@@ -1,4 +1,7 @@
-## Turn a TMDB ID or a title into a TMDB ID.
+## Turn a TMDB ID, an IMDb ID or imdb.com URL, or a title into a TMDB ID.
+##
+## An IMDb ID is looked up with Seerr's imdb: search, keeping the result of
+## the given type.
 ##
 ## A title is searched for. Results with exactly that title win over the first
 ## result, unless they are obscure: an exact match needs at least a tenth of
@@ -14,7 +17,7 @@
 ## Usage: seerr_tmdb_resolve movie|tv TITLE_OR_ID
 seerr_tmdb_resolve() {
   local type=$1 query=$2 year=${args[--year]:-}
-  local json pick answer page=1 pages
+  local json pick answer imdb page=1 pages
   local -a matches=()
   local filter='
     [.results[]
@@ -37,6 +40,17 @@ seerr_tmdb_resolve() {
   seerr_tmdb_match=""
   if [[ $query =~ ^[0-9]+$ && -z $year ]]; then
     seerr_tmdb_id=$query
+    return
+  fi
+
+  if imdb=$(seerr_imdb_id "$query"); then
+    json=$(seerr_api GET "/search$(seerr_query query "imdb:$imdb" page 1 language "${args[--language]:-}")")
+    pick=$(jq -r --arg type "$type" "$(seerr_jq_defs) first(.results[]? | select(.mediaType == \$type) | \"\(.id)\t\(title_year | one_line)\") // empty" <<<"$json")
+    if [[ -z $pick ]]; then
+      seerr_die "no $type found with IMDb ID $imdb"
+    fi
+    seerr_tmdb_id=${pick%%$'\t'*}
+    seerr_tmdb_match=${pick#*$'\t'}
     return
   fi
 
@@ -74,4 +88,16 @@ seerr_tmdb_resolve() {
 
   seerr_tmdb_id=${pick%%$'\t'*}
   seerr_tmdb_match=${pick#*$'\t'}
+}
+
+## Print the IMDb ID in an IMDb ID or imdb.com URL, or fail if there isn't one.
+## Usage: seerr_imdb_id https://www.imdb.com/title/tt0111161/   # prints tt0111161
+seerr_imdb_id() {
+  if [[ $1 =~ ^tt[0-9]+$ ]]; then
+    echo "$1"
+  elif [[ $1 =~ ^(https?://)?([a-z]+\.)?imdb\.com/title/(tt[0-9]+)([/?#].*)?$ ]]; then
+    echo "${BASH_REMATCH[3]}"
+  else
+    return 1
+  fi
 }

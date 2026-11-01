@@ -105,13 +105,22 @@ seerr_search_usage() {
   printf "seerr search - Search for movies, TV shows, and people\n\n"
 
   printf "%s\n" "Usage:"
-  printf "  seerr search QUERY [OPTIONS]\n"
+  printf "  seerr search [QUERY] [OPTIONS]\n"
   printf "  seerr search --help | -h\n"
   echo
 
   if [[ -n "$long_usage" ]]; then
 
     printf "%s\n" "Options:"
+
+    printf "  %s\n" "--imdb, -i ID"
+    printf "    Find the title with this IMDb ID or imdb.com URL\n"
+    printf "    %s\n" "Conflicts: --tvdb"
+    echo
+
+    printf "  %s\n" "--tvdb ID"
+    printf "    Find the TV show with this TVDB ID\n"
+    echo
 
     printf "  %s\n" "--json, -j"
     printf "    Print raw JSON instead of a table\n"
@@ -133,12 +142,14 @@ seerr_search_usage() {
     printf "%s\n" "Arguments:"
 
     printf "  %s\n" "QUERY"
-    printf "    Search terms\n"
+    printf "    Search terms. Leave out when using --imdb or --tvdb.\n"
     echo
 
     printf "%s\n" "Examples:"
     printf "  seerr search \"Big Buck Bunny\"\n"
     printf "  seerr search Caminandes --page 2\n"
+    printf "  seerr search --imdb tt1727587\n"
+    printf "  seerr search --tvdb 81189\n"
     echo
 
   fi
@@ -219,13 +230,14 @@ seerr_movie_usage() {
     printf "%s\n" "Arguments:"
 
     printf "  %s\n" "TITLE_OR_ID"
-    printf "    TMDB ID, or a title to search for. Uses the first match, or asks which one\n    when several have that exact title.\n"
+    printf "    TMDB ID, IMDb ID or imdb.com URL, or a title to search for. Uses the first\n    match, or asks which one when several have that exact title.\n"
     echo
 
     printf "%s\n" "Examples:"
     printf "  seerr movie 10378\n"
     printf "  seerr movie \"Big Buck Bunny\"\n"
     printf "  seerr movie Sintel --year 2010\n"
+    printf "  seerr movie https://www.imdb.com/title/tt1727587/\n"
     echo
 
   fi
@@ -266,7 +278,7 @@ seerr_tv_usage() {
     printf "%s\n" "Arguments:"
 
     printf "  %s\n" "TITLE_OR_ID"
-    printf "    TMDB ID, or a title to search for. Uses the first match, or asks which one\n    when several have that exact title.\n"
+    printf "    TMDB ID, IMDb ID or imdb.com URL, or a title to search for. Uses the first\n    match, or asks which one when several have that exact title.\n"
     echo
 
     printf "%s\n" "Examples:"
@@ -508,7 +520,7 @@ seerr_request_create_usage() {
     echo
 
     printf "  %s\n" "TITLE_OR_ID"
-    printf "    TMDB ID, or a title to search for. Uses the first match, or asks which one\n    when several have that exact title.\n"
+    printf "    TMDB ID, IMDb ID or imdb.com URL, or a title to search for. Uses the first\n    match, or asks which one when several have that exact title.\n"
     echo
 
     printf "%s\n" "Examples:"
@@ -779,7 +791,7 @@ seerr_issue_create_usage() {
     echo
 
     printf "  %s\n" "TITLE_OR_ID"
-    printf "    TMDB ID, or a title to search for. Uses the first match, or asks which one\n    when several have that exact title.\n"
+    printf "    TMDB ID, IMDb ID or imdb.com URL, or a title to search for. Uses the first\n    match, or asks which one when several have that exact title.\n"
     echo
 
     printf "  %s\n" "MESSAGE"
@@ -1506,7 +1518,7 @@ seerr_skip() {
 
 seerr_tmdb_resolve() {
   local type=$1 query=$2 year=${args[--year]:-}
-  local json pick answer page=1 pages
+  local json pick answer imdb page=1 pages
   local -a matches=()
   local filter='
     [.results[]
@@ -1529,6 +1541,17 @@ seerr_tmdb_resolve() {
   seerr_tmdb_match=""
   if [[ $query =~ ^[0-9]+$ && -z $year ]]; then
     seerr_tmdb_id=$query
+    return
+  fi
+
+  if imdb=$(seerr_imdb_id "$query"); then
+    json=$(seerr_api GET "/search$(seerr_query query "imdb:$imdb" page 1 language "${args[--language]:-}")")
+    pick=$(jq -r --arg type "$type" "$(seerr_jq_defs) first(.results[]? | select(.mediaType == \$type) | \"\(.id)\t\(title_year | one_line)\") // empty" <<<"$json")
+    if [[ -z $pick ]]; then
+      seerr_die "no $type found with IMDb ID $imdb"
+    fi
+    seerr_tmdb_id=${pick%%$'\t'*}
+    seerr_tmdb_match=${pick#*$'\t'}
     return
   fi
 
@@ -1566,6 +1589,16 @@ seerr_tmdb_resolve() {
 
   seerr_tmdb_id=${pick%%$'\t'*}
   seerr_tmdb_match=${pick#*$'\t'}
+}
+
+seerr_imdb_id() {
+  if [[ $1 =~ ^tt[0-9]+$ ]]; then
+    echo "$1"
+  elif [[ $1 =~ ^(https?://)?([a-z]+\.)?imdb\.com/title/(tt[0-9]+)([/?#].*)?$ ]]; then
+    echo "${BASH_REMATCH[3]}"
+  else
+    return 1
+  fi
 }
 
 seerr_die() {
@@ -1746,8 +1779,25 @@ yaml_load() {
 
 seerr_search_command() {
 
-  query=$(seerr_query query "${args[query]}" page "${args[--page]}" language "${args[--language]:-}")
-  json=$(seerr_api GET "/search$query")
+  query=${args[query]:-}
+  id=""
+  if [[ -n ${args[--imdb]:-} ]]; then
+    imdb=$(seerr_imdb_id "${args[--imdb]}") || seerr_die "not an IMDb ID or imdb.com URL: ${args[--imdb]}"
+    id="IMDb ID $imdb" query=imdb:$imdb
+  elif [[ -n ${args[--tvdb]:-} ]]; then
+    id="TVDB ID ${args[--tvdb]}" query=tvdb:${args[--tvdb]}
+  fi
+
+  if [[ -n $id && -n ${args[query]:-} ]]; then
+    seerr_die "give search terms or an ID, not both"
+  elif [[ -z $query ]]; then
+    seerr_die "give search terms, --imdb ID, or --tvdb ID"
+  fi
+
+  json=$(seerr_api GET "/search$(seerr_query query "$query" page "${args[--page]}" language "${args[--language]:-}")")
+  if [[ -n $id ]] && jq -e '(.results // []) | length == 0' <<<"$json" >/dev/null; then
+    seerr_die "nothing found with $id"
+  fi
   seerr_table "$json" results_table
   seerr_footer "$json" page_footer
 
@@ -2533,6 +2583,35 @@ seerr_search_parse_requirements() {
     key="$1"
     case "$key" in
 
+      --imdb | -i)
+
+        if [[ -n "${args['--tvdb']:-}" ]]; then
+          printf "conflicting options: %s cannot be used with %s\n" "$key" "--tvdb" >&2
+          exit 1
+        fi
+
+        if [[ -n ${2+x} ]]; then
+          args['--imdb']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--imdb requires an argument: --imdb, -i ID" >&2
+          exit 1
+        fi
+        ;;
+
+      --tvdb)
+
+        if [[ -n ${2+x} ]]; then
+          args['--tvdb']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--tvdb requires an argument: --tvdb ID" >&2
+          exit 1
+        fi
+        ;;
+
       --json | -j)
 
         args['--json']=1
@@ -2600,13 +2679,15 @@ seerr_search_parse_requirements() {
     esac
   done
 
-  if [[ -z ${args['query']+x} ]]; then
-    printf "missing required argument: QUERY\nusage: seerr search QUERY [OPTIONS]\n" >&2
-
-    exit 1
-  fi
-
   [[ -n ${args['--page']:-} ]] || args['--page']="1"
+
+  if [[ -v args['--tvdb'] ]]; then
+    validation_output="$(validate_positive_integer "${args['--tvdb']:-}")"
+    if [[ -n "${validation_output}" ]]; then
+      printf "validation error in %s:\n%s\n" "--tvdb ID" "$validation_output" >&2
+      exit 1
+    fi
+  fi
 
   if [[ -v args['--page'] ]]; then
     validation_output="$(validate_positive_integer "${args['--page']:-}")"
@@ -6039,6 +6120,27 @@ seerr_search_completion() {
         completion_blocked_flags["--help"]=1
         shift
         ;;
+      --imdb | -i)
+        shift
+        if [[ $# -eq 0 ]]; then
+
+          return
+        fi
+        shift
+        completion_blocked_flags["--imdb"]=1
+        completion_blocked_flags["--tvdb"]=1
+
+        ;;
+      --tvdb)
+        shift
+        if [[ $# -eq 0 ]]; then
+
+          return
+        fi
+        shift
+        completion_blocked_flags["--tvdb"]=1
+
+        ;;
       --json | -j)
         completion_blocked_flags["--json"]=1
 
@@ -6077,6 +6179,8 @@ seerr_search_completion() {
 
   if [[ $completion_current == -* ]]; then
     completion_flag_candidates --help "$completion_current" --help -h
+    completion_flag_candidates --imdb "$completion_current" --imdb -i
+    completion_flag_candidates --tvdb "$completion_current" --tvdb
     completion_flag_candidates --json "$completion_current" --json -j
     completion_flag_candidates --page "$completion_current" --page -p
     completion_flag_candidates --language "$completion_current" --language -l

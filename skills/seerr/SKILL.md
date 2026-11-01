@@ -25,7 +25,7 @@ allowed-tools: Bash(seerr status:*) Bash(seerr whoami:*) Bash(seerr search:*) Ba
 - **Use IDs for changes, not titles.** Commands accept a title, but without a terminal they pick a match silently, which may not be the one the user means. Search, confirm the match with the user, then pass its TMDB ID.
 - **Read with `--json`, show with tables.** Add `--json` and parse with `jq` when you need data. Leave it off when the user just wants to see a list; tables include titles, but JSON only has TMDB IDs.
 - **Don't retry a failed change.** Exit status 1 means it failed, and the reason is on stderr. If a request may have gone through anyway, check `seerr request list` before trying again.
-- **Know which ID is which.** TMDB IDs identify a title (`search`, `movie`, `tv`, `request create`, `issue create`). Request IDs and issue IDs identify one request or issue (`request get|approve|...`, `issue get|comment|...`). `media list` shows Seerr's own media IDs, which no other command takes.
+- **Know which ID is which.** TMDB IDs identify a title (`search`, `movie`, `tv`, `request create`, `issue create`). `movie`, `tv`, `request create`, and `issue create` also take an IMDb ID (`tt...`) or imdb.com URL in place of a TMDB ID; `seerr search --imdb ID` or `--tvdb ID` shows what it matches. Request IDs and issue IDs identify one request or issue (`request get|approve|...`, `issue get|comment|...`). `media list` shows Seerr's own media IDs, which no other command takes.
 - `-u`, `-k`, and `-c` go before the command: `seerr -c FILE request list`.
 
 ## Workflows

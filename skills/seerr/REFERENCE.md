@@ -6,7 +6,7 @@
 |---|---|---|
 | `status` | Server version and update status | |
 | `whoami` | The user the API key belongs to | |
-| `search QUERY` | Movies, TV shows, and people | `--page`, `--language` |
+| `search QUERY` | Movies, TV shows, and people | `--imdb ID\|URL` or `--tvdb ID` instead of `QUERY`, `--page`, `--language` |
 | `trending` | Trending titles | `--type all\|movie\|tv`, `--window day\|week`, `--page` |
 | `movie TITLE_OR_ID` | Movie details and availability | `--year` |
 | `tv TITLE_OR_ID` | Show details and per-season availability | `--season N` (episode list), `--year` |

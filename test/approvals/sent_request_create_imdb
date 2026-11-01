@@ -1,0 +1,2 @@
+GET /search?query=imdb%3Att0046643&page=1
+POST /request {"mediaType":"tv","mediaId":6560,"is4k":false,"seasons":"all"}
