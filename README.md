@@ -16,7 +16,7 @@ Requested Caminandes: Llamigos (2016) as request #12 (pending)
 ## Requirements
 
 - Bash 4.2+
-- `curl` or `wget`
+- `curl` or GNU `wget` 1.15+ (BusyBox wget is not supported)
 - [`jq`](https://jqlang.org)
 
 ## Installation

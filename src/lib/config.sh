@@ -35,6 +35,10 @@ seerr_settings_resolve() {
 
   seerr_url=${seerr_url%/}
   seerr_url=${seerr_url%/api/v1}
+
+  if [[ ${1:-} != lenient && $seerr_http_client == wget ]]; then
+    seerr_require_gnu_wget
+  fi
 }
 
 ## Exit with an error when a --config or SEERR_CONFIG file doesn't exist, or

@@ -1321,6 +1321,10 @@ seerr_settings_resolve() {
 
   seerr_url=${seerr_url%/}
   seerr_url=${seerr_url%/api/v1}
+
+  if [[ ${1:-} != lenient && $seerr_http_client == wget ]]; then
+    seerr_require_gnu_wget
+  fi
 }
 
 seerr_config_check() {
@@ -1511,6 +1515,15 @@ seerr_request_wget() {
   seerr_status=$(sed -n 's/^ *HTTP\/[0-9.]* \([0-9][0-9][0-9]\).*/\1/p' "$tmp/error" | tail -n 1)
   seerr_status=${seerr_status:-000}
   seerr_error=$(grep -v '^ ' "$tmp/error" | tail -n 1) || true
+}
+
+seerr_require_gnu_wget() {
+  local version
+
+  version=$(wget --version 2>/dev/null | head -n 1) || true
+  if [[ ! $version =~ ^GNU\ Wget\ ([0-9]+)\.([0-9]+) ]] || ((BASH_REMATCH[1] == 1 && BASH_REMATCH[2] < 15)); then
+    seerr_die "wget must be GNU Wget 1.15 or newer; install curl or GNU Wget"
+  fi
 }
 
 seerr_message() {

@@ -101,6 +101,18 @@ seerr_request_wget() {
   seerr_error=$(grep -v '^ ' "$tmp/error" | tail -n 1) || true
 }
 
+## Exit with an error unless wget is GNU Wget 1.15 or newer, which
+## seerr_request_wget needs for --method and --body-file. BusyBox wget, common
+## on Alpine, routers, and NAS boxes, has neither.
+seerr_require_gnu_wget() {
+  local version
+
+  version=$(wget --version 2>/dev/null | head -n 1) || true
+  if [[ ! $version =~ ^GNU\ Wget\ ([0-9]+)\.([0-9]+) ]] || ((BASH_REMATCH[1] == 1 && BASH_REMATCH[2] < 15)); then
+    seerr_die "wget must be GNU Wget 1.15 or newer; install curl or GNU Wget"
+  fi
+}
+
 ## Print the message in a response from Seerr, or nothing when it has none.
 ## Most errors use "message", but authentication errors use "error".
 seerr_message() {

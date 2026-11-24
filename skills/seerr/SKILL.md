@@ -2,7 +2,7 @@
 name: seerr
 description: Searches a Seerr media server for movies and TV shows, requests them, checks whether they're available, approves or declines requests, and reports playback issues, using the seerr command-line tool. Use when the user wants to find, request, or check on a movie or TV show, manage media requests or issues on their media server, or mentions Seerr, Overseerr, or Jellyseerr.
 license: MIT
-compatibility: Requires the seerr CLI from https://github.com/robloach/seerr-cli (Bash 4.2+, curl or wget, and jq) and network access to a Seerr server.
+compatibility: Requires the seerr CLI from https://github.com/robloach/seerr-cli (Bash 4.2+, curl or GNU Wget 1.15+, and jq) and network access to a Seerr server.
 metadata:
   author: Rob Loach
   version: "0.2.0"
@@ -68,7 +68,7 @@ allowed-tools: Bash(seerr status:*) Bash(seerr whoami:*) Bash(seerr search:*) Ba
 
 Installing changes the user's machine, so ask first, and only continue with a yes.
 
-1. Check the requirements: `bash --version` must show 4.2 or newer, and `command -v jq` plus `command -v curl` or `command -v wget` must each print a path. If something is missing, tell the user what and how to get it, such as `sudo apt install jq` or `brew install jq`. Don't run a package manager yourself.
+1. Check the requirements: `bash --version` must show 4.2 or newer, and `command -v jq` plus `command -v curl` or `command -v wget` must each print a path (wget must be GNU Wget 1.15+, not BusyBox). If something is missing, tell the user what and how to get it, such as `sudo apt install jq` or `brew install jq`. Don't run a package manager yourself.
 2. Download the script into `~/.local/bin`:
 
    ```bash

@@ -174,3 +174,10 @@ describe "errors"
   it "rejects a response that isn't JSON"
     approve "fake_status=200 fake_body='<html>Sign in</html>' seerr whoami" "error_not_json"
     expect_exit_code 1
+
+  it "rejects BusyBox wget"
+    mkdir -p tmp/busybox
+    printf '#!/bin/sh\necho "BusyBox v1.36.1 multi-call binary." >&2\nexit 1\n' >tmp/busybox/wget
+    chmod +x tmp/busybox/wget
+    approve "PATH=\$PWD/tmp/busybox:\$PATH SEERR_HTTP_CLIENT=wget seerr whoami" "error_busybox_wget"
+    expect_exit_code 1
