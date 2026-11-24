@@ -1,3 +1,1 @@
-json=$(seerr_api POST "/request/${args[id]}/retry")
-status=$(jq -r "$(seerr_jq_defs) .status | request_status" <<<"$json")
-seerr_report "$json" "Retried request #${args[id]} for $(seerr_media_label "$json"), now $status"
+seerr_action "/request/${args[id]}/retry" "Retried request #${args[id]}" request_status

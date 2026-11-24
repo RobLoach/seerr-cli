@@ -47,6 +47,22 @@ seerr_report() {
   fi
 }
 
+## POST to PATH and report "MESSAGE for TITLE", or the JSON response when
+## --json is set. With STATUS_DEF, such as request_status, the new status
+## is added, e.g. "Retried request #12 for Sintel (2010), now pending".
+## Usage: seerr_action PATH MESSAGE [STATUS_DEF]
+seerr_action() {
+  local json label status
+
+  json=$(seerr_api POST "$1")
+  label=$(seerr_media_label "$json")
+  if [[ -n ${3:-} ]]; then
+    status=$(jq -r "$(seerr_jq_defs) .status | $3" <<<"$json")
+    label+=", now $status"
+  fi
+  seerr_report "$json" "$2 for $label"
+}
+
 ## Align tab-separated columns when `column` is available.
 seerr_columns() {
   if command -v column >/dev/null 2>&1; then

@@ -158,6 +158,12 @@ describe "commands"
   it "approves a request"
     approve "seerr request approve 12"
 
+  it "declines a request"
+    approve "seerr request decline 12"
+
+  it "retries a request"
+    approve "seerr request retry 12"
+
   it "reports an issue"
     approve "seerr issue create movie 10378 'Audio is out of sync' --problem audio"
     approve "sent" "sent_issue_create"
@@ -165,6 +171,9 @@ describe "commands"
   it "only reports issues for media in Seerr"
     approve "seerr issue create movie 9761 'No sound'"
     expect_exit_code 1
+
+  it "resolves an issue"
+    approve "seerr issue resolve 3"
 
 describe "errors"
   it "explains a rejected API key"

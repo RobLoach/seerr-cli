@@ -1702,6 +1702,18 @@ seerr_report() {
   fi
 }
 
+seerr_action() {
+  local json label status
+
+  json=$(seerr_api POST "$1")
+  label=$(seerr_media_label "$json")
+  if [[ -n ${3:-} ]]; then
+    status=$(jq -r "$(seerr_jq_defs) .status | $3" <<<"$json")
+    label+=", now $status"
+  fi
+  seerr_report "$json" "$2 for $label"
+}
+
 seerr_columns() {
   if command -v column >/dev/null 2>&1; then
     column -t -s $'\t'
@@ -2044,23 +2056,19 @@ seerr_request_create_command() {
 
 seerr_request_approve_command() {
 
-  json=$(seerr_api POST "/request/${args[id]}/approve")
-  seerr_report "$json" "Approved request #${args[id]} for $(seerr_media_label "$json")"
+  seerr_action "/request/${args[id]}/approve" "Approved request #${args[id]}"
 
 }
 
 seerr_request_decline_command() {
 
-  json=$(seerr_api POST "/request/${args[id]}/decline")
-  seerr_report "$json" "Declined request #${args[id]} for $(seerr_media_label "$json")"
+  seerr_action "/request/${args[id]}/decline" "Declined request #${args[id]}"
 
 }
 
 seerr_request_retry_command() {
 
-  json=$(seerr_api POST "/request/${args[id]}/retry")
-  status=$(jq -r "$(seerr_jq_defs) .status | request_status" <<<"$json")
-  seerr_report "$json" "Retried request #${args[id]} for $(seerr_media_label "$json"), now $status"
+  seerr_action "/request/${args[id]}/retry" "Retried request #${args[id]}" request_status
 
 }
 
@@ -2187,15 +2195,13 @@ seerr_issue_comment_command() {
 
 seerr_issue_resolve_command() {
 
-  json=$(seerr_api POST "/issue/${args[id]}/resolved")
-  seerr_report "$json" "Resolved issue #${args[id]} for $(seerr_media_label "$json")"
+  seerr_action "/issue/${args[id]}/resolved" "Resolved issue #${args[id]}"
 
 }
 
 seerr_issue_reopen_command() {
 
-  json=$(seerr_api POST "/issue/${args[id]}/open")
-  seerr_report "$json" "Reopened issue #${args[id]} for $(seerr_media_label "$json")"
+  seerr_action "/issue/${args[id]}/open" "Reopened issue #${args[id]}"
 
 }
 
