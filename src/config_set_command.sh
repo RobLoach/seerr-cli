@@ -19,14 +19,14 @@ if [[ -z ${args[value]+set} ]]; then
 fi
 
 if [[ -z $value ]]; then
-  seerr_die "no value given for $key"
+  seerr_fail 2 "no value given for $key"
 fi
 if [[ $value == *$'\n'* ]]; then
-  seerr_die "$key cannot contain a line break"
+  seerr_fail 2 "$key cannot contain a line break"
 fi
 error=$(seerr_config_validate "$key" "$value")
 if [[ -n $error ]]; then
-  seerr_die "$key: $error"
+  seerr_fail 2 "$key: $error"
 fi
 
 seerr_config_write "$file" "$key" "$value"

@@ -1,7 +1,17 @@
-## Print an error message to stderr and exit.
+## Print an error message to stderr and exit 1.
 seerr_die() {
+  seerr_fail 1 "$*"
+}
+
+## Print an error message to stderr and exit with CODE, one of the exit codes
+## in the README: 2 usage, 3 configuration, 4 authentication, 5 not found,
+## 6 network.
+## Usage: seerr_fail CODE MESSAGE
+seerr_fail() {
+  local code=$1
+  shift
   printf 'seerr: %s\n' "$*" >&2
-  exit 1
+  exit "$code"
 }
 
 ## Render JSON as an aligned table, or pretty-print it when --json is set.

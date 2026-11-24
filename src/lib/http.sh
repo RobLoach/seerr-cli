@@ -16,7 +16,9 @@ seerr_api() {
       fi
       printf '%s\n' "$seerr_body"
       ;;
-    000) seerr_die "$(seerr_connect_error)" ;;
+    000) seerr_fail 6 "$(seerr_connect_error)" ;;
+    401 | 403) seerr_fail 4 "$(seerr_http_error)" ;;
+    404) seerr_fail 5 "$(seerr_http_error)" ;;
     *) seerr_die "$(seerr_http_error)" ;;
   esac
 }
@@ -144,10 +146,10 @@ seerr_connect_error() {
 ## Exit with setup instructions when the URL or API key is missing.
 seerr_require_settings() {
   if [[ -z $seerr_url ]]; then
-    seerr_die "no Seerr URL set. Use --url, SEERR_URL, or 'url:' in the config file (see seerr --help)."
+    seerr_fail 3 "no Seerr URL set. Use --url, SEERR_URL, or 'url:' in the config file (see seerr --help)."
   fi
   if [[ -z $seerr_api_key ]]; then
-    seerr_die "no API key set. Use --api-key, SEERR_API_KEY, or 'api_key:' in the config file (see seerr --help)."
+    seerr_fail 3 "no API key set. Use --api-key, SEERR_API_KEY, or 'api_key:' in the config file (see seerr --help)."
   fi
 }
 

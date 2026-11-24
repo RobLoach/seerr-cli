@@ -48,17 +48,17 @@ seerr_config_check() {
   local key var error
 
   if [[ -n $seerr_config_file && ! -f $seerr_config_file ]]; then
-    seerr_die "config file not found: $seerr_config_file"
+    seerr_fail 3 "config file not found: $seerr_config_file"
   fi
   if [[ -n $seerr_config_file && -f $seerr_config_file && ! -r $seerr_config_file ]]; then
-    seerr_die "cannot read config file: $seerr_config_file"
+    seerr_fail 3 "cannot read config file: $seerr_config_file"
   fi
 
   for key in url timeout http_client; do
     var=seerr_config_$key
     error=$(seerr_config_validate "$key" "${!var}")
     if [[ -n $error ]]; then
-      seerr_die "$key in $seerr_config_file: $error"
+      seerr_fail 3 "$key in $seerr_config_file: $error"
     fi
   done
 }
@@ -113,7 +113,7 @@ seerr_config_candidates() {
 seerr_config_read() {
   local line key value
 
-  [[ -r $1 ]] || seerr_die "cannot read config file: $1"
+  [[ -r $1 ]] || seerr_fail 3 "cannot read config file: $1"
 
   while IFS= read -r line; do
     key=${line%%=*}

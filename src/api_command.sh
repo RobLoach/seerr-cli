@@ -5,13 +5,13 @@ data=${args[--data]:-}
 case $data in
   -) data=$(cat) ;;
   @*)
-    [[ -f ${data#@} ]] || seerr_die "file not found: ${data#@}"
+    [[ -f ${data#@} ]] || seerr_fail 2 "file not found: ${data#@}"
     data=$(<"${data#@}")
     ;;
 esac
 
 if [[ -n $data ]] && ! jq empty <<<"$data" 2>/dev/null; then
-  seerr_die "--data is not valid JSON"
+  seerr_fail 2 "--data is not valid JSON"
 fi
 
 json=$(seerr_api "${args[method]}" "$path" "$data")

@@ -177,6 +177,22 @@ seerr request list --filter pending --type movie --json \
   | xargs -n1 seerr request approve
 ```
 
+### Exit codes
+
+`seerr` exits with a code that says what went wrong, with the message on stderr:
+
+| Code | Meaning |
+| --- | --- |
+| 0 | Success |
+| 1 | Any other error, such as a server error or a response that isn't JSON |
+| 2 | Usage error, such as an option that doesn't apply, e.g. `seerr request create movie 10378 --seasons 1` |
+| 3 | Configuration error: no URL or API key, or a config file that is missing, unreadable, or has a bad value |
+| 4 | Authentication failed (HTTP 401 or 403) |
+| 5 | Not found (HTTP 404), or a title or ID that matches nothing |
+| 6 | Could not reach the server, or it timed out |
+
+Errors that Bashly catches while reading the command line, such as an unknown option, a missing argument, or a bad `SEERR_*` environment variable, exit 1.
+
 ## AI agents
 
 [`skills/seerr`](skills/seerr/SKILL.md) is an [Agent Skill](https://agentskills.io) that teaches AI agents how to use `seerr`.

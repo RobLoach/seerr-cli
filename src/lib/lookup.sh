@@ -47,7 +47,7 @@ seerr_tmdb_resolve() {
     json=$(seerr_api GET "/search$(seerr_query query "imdb:$imdb" page 1 language "${args[--language]:-}")")
     pick=$(jq -r --arg type "$type" "$(seerr_jq_defs) first(.results[]? | select(.mediaType == \$type) | \"\(.id)\t\(title_year | one_line)\") // empty" <<<"$json")
     if [[ -z $pick ]]; then
-      seerr_die "no $type found with IMDb ID $imdb"
+      seerr_fail 5 "no $type found with IMDb ID $imdb"
     fi
     seerr_tmdb_id=${pick%%$'\t'*}
     seerr_tmdb_match=${pick#*$'\t'}
@@ -65,7 +65,7 @@ seerr_tmdb_resolve() {
   done
 
   if ((${#matches[@]} == 0)); then
-    seerr_die "no $type found matching '$query'${year:+ from $year}. Try 'seerr search \"$query\"'."
+    seerr_fail 5 "no $type found matching '$query'${year:+ from $year}. Try 'seerr search \"$query\"'."
   fi
 
   pick=${matches[0]}

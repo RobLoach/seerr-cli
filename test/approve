@@ -66,12 +66,12 @@ describe "config"
 
   it "rejects a bad value"
     approve "seerr config set url ftp://seerr.example.com"
-    expect_exit_code 1
+    expect_exit_code 2
 
   it "shows the settings, then fails, when the config file has a bad value"
     echo "timeout: soon" >>~/.config/seerr/seerr-cli.yaml
     approve "seerr config show" "config_show_bad_value"
-    expect_exit_code 1
+    expect_exit_code 3
 
 rm ~/.config/seerr/seerr-cli.yaml
 export SEERR_URL=https://seerr.example.com SEERR_API_KEY=test-key
@@ -94,7 +94,7 @@ describe "title lookup"
 
   it "gives up after three pages of results"
     approve "seerr movie Blender --year 1921"
-    expect_exit_code 1
+    expect_exit_code 5
     approve "sent" "sent_movie_blender_1921"
 
   it "looks up an IMDb ID"
@@ -106,11 +106,11 @@ describe "title lookup"
 
   it "fails when the IMDb ID is not that type"
     approve "seerr movie tt0046643"
-    expect_exit_code 1
+    expect_exit_code 5
 
   it "fails when the IMDb ID matches nothing"
     approve "seerr movie tt0000000"
-    expect_exit_code 1
+    expect_exit_code 5
 
 describe "commands"
   it "searches"
@@ -122,15 +122,15 @@ describe "commands"
 
   it "fails when a searched ID matches nothing"
     approve "seerr search --imdb tt0000000"
-    expect_exit_code 1
+    expect_exit_code 5
 
   it "needs search terms or an ID, not both"
     approve "seerr search"
-    expect_exit_code 1
+    expect_exit_code 2
     approve "seerr search Sintel --tvdb 78855"
-    expect_exit_code 1
+    expect_exit_code 2
     approve "seerr search --imdb 1727587"
-    expect_exit_code 1
+    expect_exit_code 2
 
   it "shows a TV show and its seasons"
     approve "seerr tv 6560"
@@ -145,6 +145,10 @@ describe "commands"
   it "requests a TV show"
     approve "seerr request create tv 6560 --seasons 1 --4k"
     approve "sent" "sent_request_create"
+
+  it "rejects --seasons for a movie"
+    approve "seerr request create movie 10378 --seasons 1"
+    expect_exit_code 2
 
   it "fails when Seerr creates no request"
     approve "fake_status=202 fake_body='{\"message\": \"No seasons available to request\"}' seerr request create tv 6560" "request_create_no_seasons"
@@ -170,7 +174,7 @@ describe "commands"
 
   it "only reports issues for media in Seerr"
     approve "seerr issue create movie 9761 'No sound'"
-    expect_exit_code 1
+    expect_exit_code 5
 
   it "resolves an issue"
     approve "seerr issue resolve 3"
@@ -178,7 +182,20 @@ describe "commands"
 describe "errors"
   it "explains a rejected API key"
     approve "fake_status=403 fake_body='{\"error\": \"Forbidden\"}' seerr whoami" "error_api_key"
-    expect_exit_code 1
+    expect_exit_code 4
+
+  it "explains a missing API key"
+    approve "SEERR_API_KEY= seerr whoami" "error_no_api_key"
+    expect_exit_code 3
+
+  it "explains a missing request"
+    approve "seerr request get 999"
+    expect_exit_code 5
+
+  it "explains a server it cannot reach"
+    allow_diff ": Failed to connect.*"
+    approve "SEERR_URL=http://127.0.0.1:1 SEERR_HTTP_CLIENT=curl bash -c 'source ../seerr; start whoami'" "error_connect"
+    expect_exit_code 6
 
   it "rejects a response that isn't JSON"
     approve "fake_status=200 fake_body='<html>Sign in</html>' seerr whoami" "error_not_json"

@@ -89,9 +89,18 @@ Requests and issues don't include the title. Get it with `seerr movie TMDB_ID --
 
 ## Errors
 
-- Exit status is 0 on success and 1 on any failure. The message is on stderr and starts with `seerr:`.
-- HTTP 401 or 403 means the API key is wrong or lacks permission. Tell the user; don't try to fix the key.
+- The message is on stderr and starts with `seerr:`. The exit status says what kind of failure it was:
+
+  | Code | Meaning | What to do |
+  | --- | --- | --- |
+  | 0 | Success | |
+  | 1 | Any other error | Read the message. Unknown options and missing arguments also exit 1. |
+  | 2 | Usage error, such as `--seasons` on a movie | Fix the command. |
+  | 3 | No URL or API key, or a bad config file | Tell the user; see "Before you start" in SKILL.md. |
+  | 4 | HTTP 401 or 403: the API key is wrong or lacks permission | Tell the user; don't try to fix the key. |
+  | 5 | HTTP 404, or a title or ID that matches nothing | Check the ID, or search for the title. |
+  | 6 | Could not reach the server, or it timed out | Tell the user; don't retry a change. |
 - "did not answer with JSON" means the URL points at something other than Seerr, such as a proxy login page.
 - "no request created" means Seerr accepted the call but made no request. For TV, "No seasons available to request" means every season asked for is already requested or available, or the show only has specials. Tell the user rather than retrying.
-- `config show` prints the settings even when the config file is missing or has a bad value, then exits 1 with the problem on the last line. Other commands stop at the problem without printing anything else.
+- `config show` prints the settings even when the config file is missing or has a bad value, then exits 3 with the problem on the last line. Other commands stop at the problem without printing anything else.
 - Requests time out after 30 seconds. The user can raise this with `SEERR_TIMEOUT` or `seerr config set timeout SECONDS`.

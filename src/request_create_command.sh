@@ -6,7 +6,7 @@ if [[ -n ${args[--4k]:-} ]]; then
 fi
 
 if [[ $type == movie && -n $seasons ]]; then
-  seerr_die "--seasons only applies to TV requests"
+  seerr_fail 2 "--seasons only applies to TV requests"
 fi
 
 if [[ $type == tv ]]; then

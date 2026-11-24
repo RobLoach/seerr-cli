@@ -1331,17 +1331,17 @@ seerr_config_check() {
   local key var error
 
   if [[ -n $seerr_config_file && ! -f $seerr_config_file ]]; then
-    seerr_die "config file not found: $seerr_config_file"
+    seerr_fail 3 "config file not found: $seerr_config_file"
   fi
   if [[ -n $seerr_config_file && -f $seerr_config_file && ! -r $seerr_config_file ]]; then
-    seerr_die "cannot read config file: $seerr_config_file"
+    seerr_fail 3 "cannot read config file: $seerr_config_file"
   fi
 
   for key in url timeout http_client; do
     var=seerr_config_$key
     error=$(seerr_config_validate "$key" "${!var}")
     if [[ -n $error ]]; then
-      seerr_die "$key in $seerr_config_file: $error"
+      seerr_fail 3 "$key in $seerr_config_file: $error"
     fi
   done
 }
@@ -1385,7 +1385,7 @@ seerr_config_candidates() {
 seerr_config_read() {
   local line key value
 
-  [[ -r $1 ]] || seerr_die "cannot read config file: $1"
+  [[ -r $1 ]] || seerr_fail 3 "cannot read config file: $1"
 
   while IFS= read -r line; do
     key=${line%%=*}
@@ -1447,7 +1447,9 @@ seerr_api() {
       fi
       printf '%s\n' "$seerr_body"
       ;;
-    000) seerr_die "$(seerr_connect_error)" ;;
+    000) seerr_fail 6 "$(seerr_connect_error)" ;;
+    401 | 403) seerr_fail 4 "$(seerr_http_error)" ;;
+    404) seerr_fail 5 "$(seerr_http_error)" ;;
     *) seerr_die "$(seerr_http_error)" ;;
   esac
 }
@@ -1552,10 +1554,10 @@ seerr_connect_error() {
 
 seerr_require_settings() {
   if [[ -z $seerr_url ]]; then
-    seerr_die "no Seerr URL set. Use --url, SEERR_URL, or 'url:' in the config file (see seerr --help)."
+    seerr_fail 3 "no Seerr URL set. Use --url, SEERR_URL, or 'url:' in the config file (see seerr --help)."
   fi
   if [[ -z $seerr_api_key ]]; then
-    seerr_die "no API key set. Use --api-key, SEERR_API_KEY, or 'api_key:' in the config file (see seerr --help)."
+    seerr_fail 3 "no API key set. Use --api-key, SEERR_API_KEY, or 'api_key:' in the config file (see seerr --help)."
   fi
 }
 
@@ -1609,7 +1611,7 @@ seerr_tmdb_resolve() {
     json=$(seerr_api GET "/search$(seerr_query query "imdb:$imdb" page 1 language "${args[--language]:-}")")
     pick=$(jq -r --arg type "$type" "$(seerr_jq_defs) first(.results[]? | select(.mediaType == \$type) | \"\(.id)\t\(title_year | one_line)\") // empty" <<<"$json")
     if [[ -z $pick ]]; then
-      seerr_die "no $type found with IMDb ID $imdb"
+      seerr_fail 5 "no $type found with IMDb ID $imdb"
     fi
     seerr_tmdb_id=${pick%%$'\t'*}
     seerr_tmdb_match=${pick#*$'\t'}
@@ -1627,7 +1629,7 @@ seerr_tmdb_resolve() {
   done
 
   if ((${#matches[@]} == 0)); then
-    seerr_die "no $type found matching '$query'${year:+ from $year}. Try 'seerr search \"$query\"'."
+    seerr_fail 5 "no $type found matching '$query'${year:+ from $year}. Try 'seerr search \"$query\"'."
   fi
 
   pick=${matches[0]}
@@ -1663,8 +1665,14 @@ seerr_imdb_id() {
 }
 
 seerr_die() {
+  seerr_fail 1 "$*"
+}
+
+seerr_fail() {
+  local code=$1
+  shift
   printf 'seerr: %s\n' "$*" >&2
-  exit 1
+  exit "$code"
 }
 
 seerr_table() {
@@ -1855,21 +1863,21 @@ seerr_search_command() {
   query=${args[query]:-}
   id=""
   if [[ -n ${args[--imdb]:-} ]]; then
-    imdb=$(seerr_imdb_id "${args[--imdb]}") || seerr_die "not an IMDb ID or imdb.com URL: ${args[--imdb]}"
+    imdb=$(seerr_imdb_id "${args[--imdb]}") || seerr_fail 2 "not an IMDb ID or imdb.com URL: ${args[--imdb]}"
     id="IMDb ID $imdb" query=imdb:$imdb
   elif [[ -n ${args[--tvdb]:-} ]]; then
     id="TVDB ID ${args[--tvdb]}" query=tvdb:${args[--tvdb]}
   fi
 
   if [[ -n $id && -n ${args[query]:-} ]]; then
-    seerr_die "give search terms or an ID, not both"
+    seerr_fail 2 "give search terms or an ID, not both"
   elif [[ -z $query ]]; then
-    seerr_die "give search terms, --imdb ID, or --tvdb ID"
+    seerr_fail 2 "give search terms, --imdb ID, or --tvdb ID"
   fi
 
   json=$(seerr_api GET "/search$(seerr_query query "$query" page "${args[--page]}" language "${args[--language]:-}")")
   if [[ -n $id ]] && jq -e '(.results // []) | length == 0' <<<"$json" >/dev/null; then
-    seerr_die "nothing found with $id"
+    seerr_fail 5 "nothing found with $id"
   fi
   seerr_table "$json" results_table
   seerr_footer "$json" page_footer
@@ -2028,7 +2036,7 @@ seerr_request_create_command() {
   fi
 
   if [[ $type == movie && -n $seasons ]]; then
-    seerr_die "--seasons only applies to TV requests"
+    seerr_fail 2 "--seasons only applies to TV requests"
   fi
 
   if [[ $type == tv ]]; then
@@ -2128,7 +2136,7 @@ seerr_issue_create_command() {
   episode=${args[--episode]:-0}
 
   if [[ $type == movie && (-n ${args[--season]:-} || -n ${args[--episode]:-}) ]]; then
-    seerr_die "--season and --episode only apply to TV issues"
+    seerr_fail 2 "--season and --episode only apply to TV issues"
   fi
 
   seerr_tmdb_resolve "$type" "${args[title_or_id]}"
@@ -2138,7 +2146,7 @@ seerr_issue_create_command() {
   # Issues belong to Seerr's own media record, not the TMDB ID.
   media_id=$(jq -r '.mediaInfo.id // empty' <<<"$details")
   if [[ -z $media_id ]]; then
-    seerr_die "$title isn't in Seerr yet. You can only report issues for media that has been requested."
+    seerr_fail 5 "$title isn't in Seerr yet. You can only report issues for media that has been requested."
   fi
 
   body=$(jq -cn \
@@ -2267,13 +2275,13 @@ seerr_api_command() {
   case $data in
     -) data=$(cat) ;;
     @*)
-      [[ -f ${data#@} ]] || seerr_die "file not found: ${data#@}"
+      [[ -f ${data#@} ]] || seerr_fail 2 "file not found: ${data#@}"
       data=$(<"${data#@}")
       ;;
   esac
 
   if [[ -n $data ]] && ! jq empty <<<"$data" 2>/dev/null; then
-    seerr_die "--data is not valid JSON"
+    seerr_fail 2 "--data is not valid JSON"
   fi
 
   json=$(seerr_api "${args[method]}" "$path" "$data")
@@ -2334,14 +2342,14 @@ seerr_config_set_command() {
   fi
 
   if [[ -z $value ]]; then
-    seerr_die "no value given for $key"
+    seerr_fail 2 "no value given for $key"
   fi
   if [[ $value == *$'\n'* ]]; then
-    seerr_die "$key cannot contain a line break"
+    seerr_fail 2 "$key cannot contain a line break"
   fi
   error=$(seerr_config_validate "$key" "$value")
   if [[ -n $error ]]; then
-    seerr_die "$key: $error"
+    seerr_fail 2 "$key: $error"
   fi
 
   seerr_config_write "$file" "$key" "$value"
