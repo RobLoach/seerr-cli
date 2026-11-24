@@ -1,0 +1,4 @@
+GET /movie/10378?language=fr
+GET /movie/133701?language=fr
+GET /request?take=20&skip=0&mediaType=all&sort=added
+GET /tv/6560?language=fr

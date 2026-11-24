@@ -172,6 +172,7 @@ commands:
     help: List media
     flags:
     - *json
+    - *language
     - *page
     - &take
       long: --take
@@ -201,6 +202,7 @@ commands:
     help: List media requests
     flags:
     - *json
+    - *language
     - *page
     - *take
     - long: --filter
@@ -237,6 +239,7 @@ commands:
       validate: integer
     flags:
     - *json
+    - *language
 
   - name: create
     help: Request a movie or TV show
@@ -248,6 +251,7 @@ commands:
     - *title_or_id
     flags:
     - *json
+    - *language
     - *year
     - long: --seasons
       short: -s
@@ -267,6 +271,7 @@ commands:
     - *request_id
     flags:
     - *json
+    - *language
 
   - name: decline
     help: Decline a pending request
@@ -274,6 +279,7 @@ commands:
     - *request_id
     flags:
     - *json
+    - *language
 
   - name: retry
     help: Retry a failed request
@@ -281,6 +287,7 @@ commands:
     - *request_id
     flags:
     - *json
+    - *language
 
   - name: delete
     help: Delete a request
@@ -303,6 +310,7 @@ commands:
     help: List issues
     flags:
     - *json
+    - *language
     - *page
     - *take
     - long: --filter
@@ -330,6 +338,7 @@ commands:
       help: Description of the problem
     flags:
     - *json
+    - *language
     - *year
     - long: --problem
       arg: kind
@@ -361,6 +370,7 @@ commands:
       validate: integer
     flags:
     - *json
+    - *language
 
   - name: comment
     help: Add a comment to an issue
@@ -378,6 +388,7 @@ commands:
     - *issue_id
     flags:
     - *json
+    - *language
 
   - name: reopen
     help: Reopen a resolved issue
@@ -385,6 +396,7 @@ commands:
     - *issue_id
     flags:
     - *json
+    - *language
 
 - name: status
   help: Show the Seerr server version and update status

@@ -138,6 +138,10 @@ describe "commands"
   it "lists requests with their titles"
     approve "seerr request list"
 
+  it "looks up titles in the requested language"
+    seerr request list --language fr >/dev/null
+    approve "sent" "sent_request_list_language"
+
   it "requests a TV show"
     approve "seerr request create tv 6560 --seasons 1 --4k"
     approve "sent" "sent_request_create"

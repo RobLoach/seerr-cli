@@ -330,6 +330,10 @@ seerr_media_list_usage() {
     printf "    Print raw JSON instead of a table\n"
     echo
 
+    printf "  %s\n" "--language, -l CODE"
+    printf "    Language for titles and overviews, e.g. en or fr\n"
+    echo
+
     printf "  %s\n" "--page, -p NUMBER"
     printf "    Page of results to show\n"
     printf "    %s\n" "Default: 1"
@@ -408,6 +412,10 @@ seerr_request_list_usage() {
     printf "    Print raw JSON instead of a table\n"
     echo
 
+    printf "  %s\n" "--language, -l CODE"
+    printf "    Language for titles and overviews, e.g. en or fr\n"
+    echo
+
     printf "  %s\n" "--page, -p NUMBER"
     printf "    Page of results to show\n"
     printf "    %s\n" "Default: 1"
@@ -467,6 +475,10 @@ seerr_request_get_usage() {
     printf "    Print raw JSON instead of a table\n"
     echo
 
+    printf "  %s\n" "--language, -l CODE"
+    printf "    Language for titles and overviews, e.g. en or fr\n"
+    echo
+
     printf "  %s\n" "--help, -h"
     printf "    Show this help\n"
     echo
@@ -494,6 +506,10 @@ seerr_request_create_usage() {
 
     printf "  %s\n" "--json, -j"
     printf "    Print raw JSON instead of a table\n"
+    echo
+
+    printf "  %s\n" "--language, -l CODE"
+    printf "    Language for titles and overviews, e.g. en or fr\n"
     echo
 
     printf "  %s\n" "--year, -y YEAR"
@@ -548,6 +564,10 @@ seerr_request_approve_usage() {
     printf "    Print raw JSON instead of a table\n"
     echo
 
+    printf "  %s\n" "--language, -l CODE"
+    printf "    Language for titles and overviews, e.g. en or fr\n"
+    echo
+
     printf "  %s\n" "--help, -h"
     printf "    Show this help\n"
     echo
@@ -577,6 +597,10 @@ seerr_request_decline_usage() {
     printf "    Print raw JSON instead of a table\n"
     echo
 
+    printf "  %s\n" "--language, -l CODE"
+    printf "    Language for titles and overviews, e.g. en or fr\n"
+    echo
+
     printf "  %s\n" "--help, -h"
     printf "    Show this help\n"
     echo
@@ -604,6 +628,10 @@ seerr_request_retry_usage() {
 
     printf "  %s\n" "--json, -j"
     printf "    Print raw JSON instead of a table\n"
+    echo
+
+    printf "  %s\n" "--language, -l CODE"
+    printf "    Language for titles and overviews, e.g. en or fr\n"
     echo
 
     printf "  %s\n" "--help, -h"
@@ -715,6 +743,10 @@ seerr_issue_list_usage() {
     printf "    Print raw JSON instead of a table\n"
     echo
 
+    printf "  %s\n" "--language, -l CODE"
+    printf "    Language for titles and overviews, e.g. en or fr\n"
+    echo
+
     printf "  %s\n" "--page, -p NUMBER"
     printf "    Page of results to show\n"
     printf "    %s\n" "Default: 1"
@@ -758,6 +790,10 @@ seerr_issue_create_usage() {
 
     printf "  %s\n" "--json, -j"
     printf "    Print raw JSON instead of a table\n"
+    echo
+
+    printf "  %s\n" "--language, -l CODE"
+    printf "    Language for titles and overviews, e.g. en or fr\n"
     echo
 
     printf "  %s\n" "--year, -y YEAR"
@@ -822,6 +858,10 @@ seerr_issue_get_usage() {
     printf "    Print raw JSON instead of a table\n"
     echo
 
+    printf "  %s\n" "--language, -l CODE"
+    printf "    Language for titles and overviews, e.g. en or fr\n"
+    echo
+
     printf "  %s\n" "--help, -h"
     printf "    Show this help\n"
     echo
@@ -884,6 +924,10 @@ seerr_issue_resolve_usage() {
     printf "    Print raw JSON instead of a table\n"
     echo
 
+    printf "  %s\n" "--language, -l CODE"
+    printf "    Language for titles and overviews, e.g. en or fr\n"
+    echo
+
     printf "  %s\n" "--help, -h"
     printf "    Show this help\n"
     echo
@@ -911,6 +955,10 @@ seerr_issue_reopen_usage() {
 
     printf "  %s\n" "--json, -j"
     printf "    Print raw JSON instead of a table\n"
+    echo
+
+    printf "  %s\n" "--language, -l CODE"
+    printf "    Language for titles and overviews, e.g. en or fr\n"
     echo
 
     printf "  %s\n" "--help, -h"
@@ -1707,7 +1755,7 @@ seerr_titles_map() {
 }
 
 seerr_title_fetch() {
-  seerr_request GET "/${1%%:*}/${1#*:}"
+  seerr_request GET "/${1%%:*}/${1#*:}$(seerr_query language "${args[--language]:-}")"
   if [[ $seerr_status == 2?? ]]; then
     jq -c --arg key "$1" "$(seerr_jq_defs) select(.title // .name) | {key: \$key, title: title_year}" <<<"$seerr_body" 2>/dev/null || true
   fi
@@ -2063,7 +2111,7 @@ seerr_issue_create_command() {
   fi
 
   seerr_tmdb_resolve "$type" "${args[title_or_id]}"
-  details=$(seerr_api GET "/$type/$seerr_tmdb_id")
+  details=$(seerr_api GET "/$type/$seerr_tmdb_id$(seerr_query language "${args[--language]:-}")")
   title=${seerr_tmdb_match:-$(jq -r "$(seerr_jq_defs) title_year" <<<"$details")}
 
   # Issues belong to Seerr's own media record, not the TMDB ID.
@@ -3171,6 +3219,18 @@ seerr_media_list_parse_requirements() {
         shift
         ;;
 
+      --language | -l)
+
+        if [[ -n ${2+x} ]]; then
+          args['--language']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--language requires an argument: --language, -l CODE" >&2
+          exit 1
+        fi
+        ;;
+
       --page | -p)
 
         if [[ -n ${2+x} ]]; then
@@ -3433,6 +3493,18 @@ seerr_request_list_parse_requirements() {
         shift
         ;;
 
+      --language | -l)
+
+        if [[ -n ${2+x} ]]; then
+          args['--language']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--language requires an argument: --language, -l CODE" >&2
+          exit 1
+        fi
+        ;;
+
       --page | -p)
 
         if [[ -n ${2+x} ]]; then
@@ -3607,6 +3679,18 @@ seerr_request_get_parse_requirements() {
         shift
         ;;
 
+      --language | -l)
+
+        if [[ -n ${2+x} ]]; then
+          args['--language']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--language requires an argument: --language, -l CODE" >&2
+          exit 1
+        fi
+        ;;
+
       --)
         shift
         while [[ $# -gt 0 ]]; do
@@ -3689,6 +3773,18 @@ seerr_request_create_parse_requirements() {
 
         args['--json']=1
         shift
+        ;;
+
+      --language | -l)
+
+        if [[ -n ${2+x} ]]; then
+          args['--language']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--language requires an argument: --language, -l CODE" >&2
+          exit 1
+        fi
         ;;
 
       --year | -y)
@@ -3832,6 +3928,18 @@ seerr_request_approve_parse_requirements() {
         shift
         ;;
 
+      --language | -l)
+
+        if [[ -n ${2+x} ]]; then
+          args['--language']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--language requires an argument: --language, -l CODE" >&2
+          exit 1
+        fi
+        ;;
+
       --)
         shift
         while [[ $# -gt 0 ]]; do
@@ -3916,6 +4024,18 @@ seerr_request_decline_parse_requirements() {
         shift
         ;;
 
+      --language | -l)
+
+        if [[ -n ${2+x} ]]; then
+          args['--language']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--language requires an argument: --language, -l CODE" >&2
+          exit 1
+        fi
+        ;;
+
       --)
         shift
         while [[ $# -gt 0 ]]; do
@@ -3998,6 +4118,18 @@ seerr_request_retry_parse_requirements() {
 
         args['--json']=1
         shift
+        ;;
+
+      --language | -l)
+
+        if [[ -n ${2+x} ]]; then
+          args['--language']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--language requires an argument: --language, -l CODE" >&2
+          exit 1
+        fi
         ;;
 
       --)
@@ -4333,6 +4465,18 @@ seerr_issue_list_parse_requirements() {
         shift
         ;;
 
+      --language | -l)
+
+        if [[ -n ${2+x} ]]; then
+          args['--language']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--language requires an argument: --language, -l CODE" >&2
+          exit 1
+        fi
+        ;;
+
       --page | -p)
 
         if [[ -n ${2+x} ]]; then
@@ -4469,6 +4613,18 @@ seerr_issue_create_parse_requirements() {
 
         args['--json']=1
         shift
+        ;;
+
+      --language | -l)
+
+        if [[ -n ${2+x} ]]; then
+          args['--language']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--language requires an argument: --language, -l CODE" >&2
+          exit 1
+        fi
         ;;
 
       --year | -y)
@@ -4663,6 +4819,18 @@ seerr_issue_get_parse_requirements() {
         shift
         ;;
 
+      --language | -l)
+
+        if [[ -n ${2+x} ]]; then
+          args['--language']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--language requires an argument: --language, -l CODE" >&2
+          exit 1
+        fi
+        ;;
+
       --)
         shift
         while [[ $# -gt 0 ]]; do
@@ -4845,6 +5013,18 @@ seerr_issue_resolve_parse_requirements() {
         shift
         ;;
 
+      --language | -l)
+
+        if [[ -n ${2+x} ]]; then
+          args['--language']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--language requires an argument: --language, -l CODE" >&2
+          exit 1
+        fi
+        ;;
+
       --)
         shift
         while [[ $# -gt 0 ]]; do
@@ -4927,6 +5107,18 @@ seerr_issue_reopen_parse_requirements() {
 
         args['--json']=1
         shift
+        ;;
+
+      --language | -l)
+
+        if [[ -n ${2+x} ]]; then
+          args['--language']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--language requires an argument: --language, -l CODE" >&2
+          exit 1
+        fi
         ;;
 
       --)
@@ -6437,6 +6629,16 @@ seerr_media_list_completion() {
 
         shift
         ;;
+      --language | -l)
+        shift
+        if [[ $# -eq 0 ]]; then
+
+          return
+        fi
+        shift
+        completion_blocked_flags["--language"]=1
+
+        ;;
       --page | -p)
         shift
         if [[ $# -eq 0 ]]; then
@@ -6502,6 +6704,7 @@ seerr_media_list_completion() {
   if [[ $completion_current == -* ]]; then
     completion_flag_candidates --help "$completion_current" --help -h
     completion_flag_candidates --json "$completion_current" --json -j
+    completion_flag_candidates --language "$completion_current" --language -l
     completion_flag_candidates --page "$completion_current" --page -p
     completion_flag_candidates --take "$completion_current" --take
     completion_flag_candidates --filter "$completion_current" --filter -f
@@ -6587,6 +6790,16 @@ seerr_request_list_completion() {
         completion_blocked_flags["--json"]=1
 
         shift
+        ;;
+      --language | -l)
+        shift
+        if [[ $# -eq 0 ]]; then
+
+          return
+        fi
+        shift
+        completion_blocked_flags["--language"]=1
+
         ;;
       --page | -p)
         shift
@@ -6680,6 +6893,7 @@ seerr_request_list_completion() {
   if [[ $completion_current == -* ]]; then
     completion_flag_candidates --help "$completion_current" --help -h
     completion_flag_candidates --json "$completion_current" --json -j
+    completion_flag_candidates --language "$completion_current" --language -l
     completion_flag_candidates --page "$completion_current" --page -p
     completion_flag_candidates --take "$completion_current" --take
     completion_flag_candidates --filter "$completion_current" --filter -f
@@ -6706,6 +6920,16 @@ seerr_request_get_completion() {
 
         shift
         ;;
+      --language | -l)
+        shift
+        if [[ $# -eq 0 ]]; then
+
+          return
+        fi
+        shift
+        completion_blocked_flags["--language"]=1
+
+        ;;
       *)
         if [[ $completion_arg_index -ge 1 ]]; then
           return
@@ -6720,6 +6944,7 @@ seerr_request_get_completion() {
   if [[ $completion_current == -* ]]; then
     completion_flag_candidates --help "$completion_current" --help -h
     completion_flag_candidates --json "$completion_current" --json -j
+    completion_flag_candidates --language "$completion_current" --language -l
   fi
 
 }
@@ -6739,6 +6964,16 @@ seerr_request_create_completion() {
         completion_blocked_flags["--json"]=1
 
         shift
+        ;;
+      --language | -l)
+        shift
+        if [[ $# -eq 0 ]]; then
+
+          return
+        fi
+        shift
+        completion_blocked_flags["--language"]=1
+
         ;;
       --year | -y)
         shift
@@ -6779,6 +7014,7 @@ seerr_request_create_completion() {
   if [[ $completion_current == -* ]]; then
     completion_flag_candidates --help "$completion_current" --help -h
     completion_flag_candidates --json "$completion_current" --json -j
+    completion_flag_candidates --language "$completion_current" --language -l
     completion_flag_candidates --year "$completion_current" --year -y
     completion_flag_candidates --seasons "$completion_current" --seasons -s
     completion_flag_candidates --4k "$completion_current" --4k
@@ -6814,6 +7050,16 @@ seerr_request_approve_completion() {
 
         shift
         ;;
+      --language | -l)
+        shift
+        if [[ $# -eq 0 ]]; then
+
+          return
+        fi
+        shift
+        completion_blocked_flags["--language"]=1
+
+        ;;
       *)
         if [[ $completion_arg_index -ge 1 ]]; then
           return
@@ -6828,6 +7074,7 @@ seerr_request_approve_completion() {
   if [[ $completion_current == -* ]]; then
     completion_flag_candidates --help "$completion_current" --help -h
     completion_flag_candidates --json "$completion_current" --json -j
+    completion_flag_candidates --language "$completion_current" --language -l
   fi
 
 }
@@ -6848,6 +7095,16 @@ seerr_request_decline_completion() {
 
         shift
         ;;
+      --language | -l)
+        shift
+        if [[ $# -eq 0 ]]; then
+
+          return
+        fi
+        shift
+        completion_blocked_flags["--language"]=1
+
+        ;;
       *)
         if [[ $completion_arg_index -ge 1 ]]; then
           return
@@ -6862,6 +7119,7 @@ seerr_request_decline_completion() {
   if [[ $completion_current == -* ]]; then
     completion_flag_candidates --help "$completion_current" --help -h
     completion_flag_candidates --json "$completion_current" --json -j
+    completion_flag_candidates --language "$completion_current" --language -l
   fi
 
 }
@@ -6882,6 +7140,16 @@ seerr_request_retry_completion() {
 
         shift
         ;;
+      --language | -l)
+        shift
+        if [[ $# -eq 0 ]]; then
+
+          return
+        fi
+        shift
+        completion_blocked_flags["--language"]=1
+
+        ;;
       *)
         if [[ $completion_arg_index -ge 1 ]]; then
           return
@@ -6896,6 +7164,7 @@ seerr_request_retry_completion() {
   if [[ $completion_current == -* ]]; then
     completion_flag_candidates --help "$completion_current" --help -h
     completion_flag_candidates --json "$completion_current" --json -j
+    completion_flag_candidates --language "$completion_current" --language -l
   fi
 
 }
@@ -7024,6 +7293,16 @@ seerr_issue_list_completion() {
 
         shift
         ;;
+      --language | -l)
+        shift
+        if [[ $# -eq 0 ]]; then
+
+          return
+        fi
+        shift
+        completion_blocked_flags["--language"]=1
+
+        ;;
       --page | -p)
         shift
         if [[ $# -eq 0 ]]; then
@@ -7084,6 +7363,7 @@ seerr_issue_list_completion() {
   if [[ $completion_current == -* ]]; then
     completion_flag_candidates --help "$completion_current" --help -h
     completion_flag_candidates --json "$completion_current" --json -j
+    completion_flag_candidates --language "$completion_current" --language -l
     completion_flag_candidates --page "$completion_current" --page -p
     completion_flag_candidates --take "$completion_current" --take
     completion_flag_candidates --filter "$completion_current" --filter -f
@@ -7107,6 +7387,16 @@ seerr_issue_create_completion() {
         completion_blocked_flags["--json"]=1
 
         shift
+        ;;
+      --language | -l)
+        shift
+        if [[ $# -eq 0 ]]; then
+
+          return
+        fi
+        shift
+        completion_blocked_flags["--language"]=1
+
         ;;
       --year | -y)
         shift
@@ -7169,6 +7459,7 @@ seerr_issue_create_completion() {
   if [[ $completion_current == -* ]]; then
     completion_flag_candidates --help "$completion_current" --help -h
     completion_flag_candidates --json "$completion_current" --json -j
+    completion_flag_candidates --language "$completion_current" --language -l
     completion_flag_candidates --year "$completion_current" --year -y
     completion_flag_candidates --problem "$completion_current" --problem
     completion_flag_candidates --season "$completion_current" --season -s
@@ -7205,6 +7496,16 @@ seerr_issue_get_completion() {
 
         shift
         ;;
+      --language | -l)
+        shift
+        if [[ $# -eq 0 ]]; then
+
+          return
+        fi
+        shift
+        completion_blocked_flags["--language"]=1
+
+        ;;
       *)
         if [[ $completion_arg_index -ge 1 ]]; then
           return
@@ -7219,6 +7520,7 @@ seerr_issue_get_completion() {
   if [[ $completion_current == -* ]]; then
     completion_flag_candidates --help "$completion_current" --help -h
     completion_flag_candidates --json "$completion_current" --json -j
+    completion_flag_candidates --language "$completion_current" --language -l
   fi
 
 }
@@ -7273,6 +7575,16 @@ seerr_issue_resolve_completion() {
 
         shift
         ;;
+      --language | -l)
+        shift
+        if [[ $# -eq 0 ]]; then
+
+          return
+        fi
+        shift
+        completion_blocked_flags["--language"]=1
+
+        ;;
       *)
         if [[ $completion_arg_index -ge 1 ]]; then
           return
@@ -7287,6 +7599,7 @@ seerr_issue_resolve_completion() {
   if [[ $completion_current == -* ]]; then
     completion_flag_candidates --help "$completion_current" --help -h
     completion_flag_candidates --json "$completion_current" --json -j
+    completion_flag_candidates --language "$completion_current" --language -l
   fi
 
 }
@@ -7307,6 +7620,16 @@ seerr_issue_reopen_completion() {
 
         shift
         ;;
+      --language | -l)
+        shift
+        if [[ $# -eq 0 ]]; then
+
+          return
+        fi
+        shift
+        completion_blocked_flags["--language"]=1
+
+        ;;
       *)
         if [[ $completion_arg_index -ge 1 ]]; then
           return
@@ -7321,6 +7644,7 @@ seerr_issue_reopen_completion() {
   if [[ $completion_current == -* ]]; then
     completion_flag_candidates --help "$completion_current" --help -h
     completion_flag_candidates --json "$completion_current" --json -j
+    completion_flag_candidates --language "$completion_current" --language -l
   fi
 
 }

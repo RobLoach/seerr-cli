@@ -27,6 +27,8 @@
 
 Every command takes `--json` except `request delete`, `config`, `completions`, and `api` (which always prints JSON). List commands return 20 results per page by default.
 
+`--language CODE` (e.g. `fr`) sets the language of titles and overviews. `search`, `trending`, `movie`, `tv`, `media list`, and every `request` and `issue` command that shows a title take it.
+
 `request list --filter` takes `all`, `pending`, `approved`, `processing`, `available`, `unavailable`, `failed`, `deleted`, or `completed`. `media list --filter` takes `all`, `available`, `partial`, `allavailable`, `processing`, `pending`, or `deleted`.
 
 ## Status codes

@@ -40,7 +40,7 @@ seerr_titles_map() {
 ## Print {"key": KEY, "title": "TITLE (YEAR)"} for a key like "movie:10378", or
 ## nothing when the title can't be fetched.
 seerr_title_fetch() {
-  seerr_request GET "/${1%%:*}/${1#*:}"
+  seerr_request GET "/${1%%:*}/${1#*:}$(seerr_query language "${args[--language]:-}")"
   if [[ $seerr_status == 2?? ]]; then
     jq -c --arg key "$1" "$(seerr_jq_defs) select(.title // .name) | {key: \$key, title: title_year}" <<<"$seerr_body" 2>/dev/null || true
   fi

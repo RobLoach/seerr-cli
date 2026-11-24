@@ -7,7 +7,7 @@ if [[ $type == movie && (-n ${args[--season]:-} || -n ${args[--episode]:-}) ]]; 
 fi
 
 seerr_tmdb_resolve "$type" "${args[title_or_id]}"
-details=$(seerr_api GET "/$type/$seerr_tmdb_id")
+details=$(seerr_api GET "/$type/$seerr_tmdb_id$(seerr_query language "${args[--language]:-}")")
 title=${seerr_tmdb_match:-$(jq -r "$(seerr_jq_defs) title_year" <<<"$details")}
 
 # Issues belong to Seerr's own media record, not the TMDB ID.
