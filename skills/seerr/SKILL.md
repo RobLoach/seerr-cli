@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires the seerr CLI from https://github.com/robloach/seerr-cli (Bash 4.2+, curl or wget, and jq) and network access to a Seerr server.
 metadata:
   author: Rob Loach
-  version: "0.1.0"
+  version: "0.2.0"
 allowed-tools: Bash(seerr status:*) Bash(seerr whoami:*) Bash(seerr search:*) Bash(seerr trending:*) Bash(seerr movie:*) Bash(seerr tv:*) Bash(seerr request list:*) Bash(seerr request get:*) Bash(seerr request count:*) Bash(seerr media list:*) Bash(seerr issue list:*) Bash(seerr issue get:*) Bash(seerr user list:*) Bash(seerr user get:*) Bash(seerr config show:*)
 ---
 

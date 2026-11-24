@@ -29,6 +29,15 @@ jobs:
             exit 1
           }
 
+      - name: Check that the skill version matches seerr
+        run: |
+          cli=$(sed -n 's/^version: //p' src/bashly.yml)
+          skill=$(sed -n 's/^  version: "\(.*\)"$/\1/p' skills/seerr/SKILL.md)
+          [[ $cli == "$skill" ]] || {
+            echo "::error::skills/seerr/SKILL.md is version $skill but seerr is $cli."
+            exit 1
+          }
+
       - name: ShellCheck
         run: shellcheck seerr test/approve
 
